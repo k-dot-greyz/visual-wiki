@@ -37,7 +37,7 @@ export default function HeaderActions({ resources }: HeaderActionsProps) {
         const a = document.createElement("a");
         a.href = url;
         a.download = `visual-wiki-${new Date().toISOString().split("T")[0]}.json`;
-        
+
         // Append to body, click, remove and revoke to avoid memory leak & browser compatibility failure
         document.body.appendChild(a);
         a.click();
