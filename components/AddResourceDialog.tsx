@@ -1,61 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect } from "react";
 import { X } from "lucide-react";
-import { Resource } from "@/lib/types";
+import { toast } from "sonner";
+import { addResourceAction } from "@/app/actions";
 
 interface AddResourceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (resource: Omit<Resource, "id" | "addedAt">) => void;
 }
 
 export default function AddResourceDialog({
   open,
   onOpenChange,
-  onAdd,
 }: AddResourceDialogProps) {
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    category: "example" as Resource["category"],
-    tags: "",
-    link: "",
-    image: "",
-  });
+  const [state, formAction, isPending] = useActionState(addResourceAction, null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title || !form.link) {
-      alert("Title and link are required");
-      return;
+  useEffect(() => {
+    if (state?.success) {
+      onOpenChange(false);
+    } else if (state?.error) {
+      toast.error(state.error);
     }
-
-    const tagsArray = form.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    onAdd({
-      title: form.title,
-      description: form.description || "No description yet.",
-      category: form.category,
-      tags: tagsArray.length ? tagsArray : ["new"],
-      link: form.link,
-      image:
-        form.image ||
-        `https://picsum.photos/id/${Math.floor(Math.random() * 1000)}/800/450`,
-    });
-
-    setForm({
-      title: "",
-      description: "",
-      category: "example",
-      tags: "",
-      link: "",
-      image: "",
-    });
-  };
+  }, [state, onOpenChange]);
 
   if (!open) return null;
 
@@ -63,60 +30,54 @@ export default function AddResourceDialog({
     <div className="fixed inset-0 bg-black/80 backdrop-blur z-50 flex items-center justify-center p-6">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden">
         <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-800">
-          <h2 className="text-2xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-semibold tracking-tight text-white">
             Add new resource
           </h2>
           <button
             onClick={() => onOpenChange(false)}
-            className="text-zinc-400 hover:text-white"
+            className="text-zinc-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form action={formAction} className="p-8 space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-2 text-zinc-400">
+            <label htmlFor="title" className="block text-sm font-medium mb-2 text-zinc-400">
               Title
             </label>
             <input
+              id="title"
+              name="title"
               type="text"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="React Three Fiber — Official Docs"
-              className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4"
+              className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4 text-white focus:outline-none focus:border-indigo-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-zinc-400">
+            <label htmlFor="description" className="block text-sm font-medium mb-2 text-zinc-400">
               Description
             </label>
             <textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              id="description"
+              name="description"
               placeholder="The single source of truth..."
-              className="w-full bg-zinc-950 border border-zinc-800 min-h-[100px] rounded-xl p-4"
+              className="w-full bg-zinc-950 border border-zinc-800 min-h-[100px] rounded-xl p-4 text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-zinc-400">
+              <label htmlFor="category" className="block text-sm font-medium mb-2 text-zinc-400">
                 Category
               </label>
               <select
-                value={form.category}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    category: e.target.value as Resource["category"],
-                  })
-                }
-                className="w-full h-12 bg-zinc-950 border border-zinc-800 rounded-xl px-4 text-sm"
+                id="category"
+                name="category"
+                defaultValue="example"
+                className="w-full h-12 bg-zinc-950 border border-zinc-800 rounded-xl px-4 text-sm text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
               >
                 <option value="official">Official</option>
                 <option value="example">Example / Demo</option>
@@ -126,59 +87,61 @@ export default function AddResourceDialog({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2 text-zinc-400">
+              <label htmlFor="tags" className="block text-sm font-medium mb-2 text-zinc-400">
                 Tags (comma separated)
               </label>
               <input
+                id="tags"
+                name="tags"
                 type="text"
-                value={form.tags}
-                onChange={(e) => setForm({ ...form, tags: e.target.value })}
                 placeholder="react, three, physics"
-                className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4"
+                className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4 text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-zinc-400">
+            <label htmlFor="link" className="block text-sm font-medium mb-2 text-zinc-400">
               Link
             </label>
             <input
+              id="link"
+              name="link"
               type="url"
-              value={form.link}
-              onChange={(e) => setForm({ ...form, link: e.target.value })}
               placeholder="https://..."
-              className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4"
+              className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4 text-white focus:outline-none focus:border-indigo-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-zinc-400">
+            <label htmlFor="image" className="block text-sm font-medium mb-2 text-zinc-400">
               Image URL (optional)
             </label>
             <input
+              id="image"
+              name="image"
               type="url"
-              value={form.image}
-              onChange={(e) => setForm({ ...form, image: e.target.value })}
               placeholder="Leave blank for random"
-              className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4"
+              className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4 text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           <div className="flex gap-3 pt-4">
             <button
               type="button"
+              disabled={isPending}
               onClick={() => onOpenChange(false)}
-              className="flex-1 h-12 border border-zinc-700 rounded-3xl hover:bg-zinc-900"
+              className="flex-1 h-12 border border-zinc-700 rounded-3xl hover:bg-zinc-900 transition-colors cursor-pointer disabled:opacity-50 text-zinc-300"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 h-12 bg-white text-black hover:bg-zinc-200 rounded-3xl font-semibold"
+              disabled={isPending}
+              className="flex-1 h-12 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-500 rounded-3xl font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
             >
-              Add to Garden
+              {isPending ? "Adding..." : "Add to Garden"}
             </button>
           </div>
         </form>

@@ -32,6 +32,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# user data
+resources.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
