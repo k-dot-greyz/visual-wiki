@@ -53,7 +53,6 @@ test.describe("Visual Wiki — Basic Smoke and Accessibility Tests", () => {
     // Type a search filter
     console.log("  - Typing 'Fiber' into search input...");
     await searchInput.fill("Fiber");
-    await page.waitForTimeout(300); // Wait for debounce
 
     // Verify URL reflects search param
     console.log("  - Verifying URL contains 'search=Fiber'...");
@@ -68,7 +67,6 @@ test.describe("Visual Wiki — Basic Smoke and Accessibility Tests", () => {
     console.log("  - Selecting 'Official' category...");
     const categorySelect = page.locator("#category-select");
     await categorySelect.selectOption("official");
-    await page.waitForTimeout(300); // Wait for debounce
 
     // Verify URL reflects category param
     console.log("  - Verifying URL contains 'category=official'...");
@@ -83,7 +81,6 @@ test.describe("Visual Wiki — Basic Smoke and Accessibility Tests", () => {
     console.log("  - Clearing search and category filters...");
     await searchInput.fill("");
     await categorySelect.selectOption("");
-    await page.waitForTimeout(300);
     await expect(page).not.toHaveURL(/\?/);
     console.log("  ✓ Filter resetting successfully!");
 

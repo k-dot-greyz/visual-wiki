@@ -32,12 +32,17 @@ export default function HeaderActions({ resources }: HeaderActionsProps) {
     };
 
     const json = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `visual-wiki-${new Date().toISOString().split("T")[0]}.json`;
-    a.click();
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `visual-wiki-${new Date().toISOString().split("T")[0]}.json`;
+        
+        // Append to body, click, remove and revoke to avoid memory leak & browser compatibility failure
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
     const prompt =
       `Here is my curated visual wiki (${resources.length} resources):\n\n` +

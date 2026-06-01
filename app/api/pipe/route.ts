@@ -37,6 +37,49 @@ export async function GET() {
   }
 }
 
+// Helper to validate that a URL does not resolve to local, private, or loopback networks (SSRF defense)
+function isSafeUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    const hostname = url.hostname.toLowerCase();
+
+    // Check blocklist for typical local/private hosts
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "[::1]" ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal")
+    ) {
+      return false;
+    }
+
+    // IPv4 private & link-local checks
+    // 10.x.x.x
+    if (/^10\./.test(hostname)) return false;
+    // 192.168.x.x
+    if (/^192\.168\./.test(hostname)) return false;
+    // 172.16.x.x - 172.31.x.x
+    if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname)) return false;
+    // 169.254.x.x (AWS / Cloud Providers metadata API range)
+    if (/^169\.254\./.test(hostname)) return false;
+
+    // IPv6 link-local and unique local address checks
+    if (
+      hostname.startsWith("fe80:") ||
+      hostname.startsWith("fc00:") ||
+      hostname.startsWith("fd00:")
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // Helper to extract GitHub owner and repo from URL
 function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   try {
@@ -216,6 +259,13 @@ export async function POST(request: NextRequest) {
     if (!url) {
       return NextResponse.json(
         { error: "Target url parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!isSafeUrl(url)) {
+      return NextResponse.json(
+        { error: "SSRF Prevention: Ingestion of internal, loopback, or private network ranges is prohibited." },
         { status: 400 }
       );
     }

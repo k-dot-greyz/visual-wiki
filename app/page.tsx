@@ -26,9 +26,9 @@ export default async function VisualWiki({
     .filter((r) => !category || r.category === category);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <main className="max-w-7xl mx-auto px-8 py-16">
-        <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-12">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col justify-between">
+      <div className="max-w-7xl w-full mx-auto px-8 py-16 flex flex-col gap-12">
+        <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           <div>
             <div className="flex items-center gap-4 mb-3">
               <div className="w-12 h-12 rounded-3xl bg-indigo-600 flex items-center justify-center">
@@ -51,28 +51,30 @@ export default async function VisualWiki({
           <HeaderActions resources={resources} />
         </header>
 
-        <SearchFilters initialSearch={search} initialCategory={category} resources={resources} />
+        <main className="flex flex-col gap-12">
+          <SearchFilters initialSearch={search} initialCategory={category} resources={resources} />
 
-        <section aria-label="Curated knowledge garden" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.length > 0 ? (
-            filtered.map((resource) => (
-              <ResourceCard key={resource.id} resource={resource} />
-            ))
-          ) : (
-            <div className="col-span-full py-20 text-center">
-              <p className="text-6xl mb-4" role="img" aria-label="Sprout">🌱</p>
-              <p className="text-xl text-zinc-400">
-                No resources found. Add your first one!
-              </p>
-            </div>
-          )}
-        </section>
+          <section aria-label="Curated knowledge garden" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.length > 0 ? (
+              filtered.map((resource) => (
+                <ResourceCard key={resource.id} resource={resource} />
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center">
+                <p className="text-6xl mb-4" role="img" aria-label="Sprout">🌱</p>
+                <p className="text-xl text-zinc-400">
+                  No resources found. Add your first one!
+                </p>
+              </div>
+            )}
+          </section>
+        </main>
 
-        <footer className="mt-16 text-center text-xs text-zinc-500">
+        <footer className="pt-8 border-t border-zinc-900 text-center text-xs text-zinc-500">
           {resources.length} resources • Last synced{" "}
           {new Date().toLocaleDateString()}
         </footer>
-      </main>
+      </div>
     </div>
   );
 }

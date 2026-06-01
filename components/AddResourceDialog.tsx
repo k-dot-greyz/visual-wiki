@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ export default function AddResourceDialog({
   onOpenChange,
 }: AddResourceDialogProps) {
   const [state, formAction, isPending] = useActionState(addResourceAction, null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (state?.success) {
@@ -34,14 +35,12 @@ export default function AddResourceDialog({
         {/* Modal Content container */}
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <Dialog.Content
+            aria-describedby="dialog-description"
             className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden focus:outline-none shadow-2xl flex flex-col max-h-[90vh] transition-all"
             onOpenAutoFocus={(e) => {
-              // Focus the first input field on open
-              const titleInput = document.getElementById("title");
-              if (titleInput) {
-                e.preventDefault();
-                titleInput.focus();
-              }
+              // Focus the first input field on open via React Ref
+              e.preventDefault();
+              titleInputRef.current?.focus();
             }}
           >
             {/* Modal Header */}
@@ -49,6 +48,9 @@ export default function AddResourceDialog({
               <Dialog.Title className="text-2xl font-semibold tracking-tight text-white">
                 Add new resource
               </Dialog.Title>
+              <Dialog.Description id="dialog-description" className="sr-only">
+                Fill in the details to add a new resource card into your visual garden.
+              </Dialog.Description>
               <Dialog.Close asChild>
                 <button
                   type="button"
@@ -67,6 +69,7 @@ export default function AddResourceDialog({
                   Title
                 </label>
                 <input
+                  ref={titleInputRef}
                   id="title"
                   name="title"
                   type="text"
