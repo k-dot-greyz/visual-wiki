@@ -71,7 +71,7 @@ async function fetchGitHubMetadata(owner: string, repo: string) {
   const data = await response.json();
   const title = data.full_name || `${owner}/${repo}`;
   const description = data.description || "A public repository on GitHub.";
-  
+
   const tags: string[] = [];
   if (data.language) {
     tags.push(data.language.toLowerCase());
@@ -120,11 +120,11 @@ async function fetchWebpageMetadata(url: string) {
 
   // Extract Description
   let description = "No description found.";
-  
+
   // Look for og:description first
   const ogDescMatch = bodyLessHtml.match(/<meta[^>]*?property=["']og:description["'][^>]*?content=["']([^"']+)["']/i) ||
                       bodyLessHtml.match(/<meta[^>]*?content=["']([^"']+)["'][^>]*?property=["']og:description["']/i);
-  
+
   if (ogDescMatch && ogDescMatch[1]) {
     description = ogDescMatch[1].trim();
   } else {
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
     if (githubParams && type !== "web") {
       try {
         const parsedMetadata = await fetchGitHubMetadata(githubParams.owner, githubParams.repo);
-        
+
         // Merge optional overrides from user payload
         if (payload) {
           if (payload.title) parsedMetadata.title = payload.title;
