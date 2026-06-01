@@ -118,9 +118,9 @@ export default function SearchFilters({
           <label htmlFor="search-input" className="sr-only">
             Search titles, descriptions, or tags
           </label>
-          <Search 
+          <Search
             aria-hidden="true"
-            className={`absolute left-5 top-4 text-zinc-500 w-5 h-5 transition-colors ${isPending ? "text-indigo-500 animate-pulse" : ""}`} 
+            className={`absolute left-5 top-4 text-zinc-500 w-5 h-5 transition-colors ${isPending ? "text-indigo-500 animate-pulse" : ""}`}
           />
           <input
             id="search-input"
@@ -160,8 +160,8 @@ export default function SearchFilters({
       </div>
 
       {/* Ingestion Pipe Row */}
-      <form 
-        onSubmit={handlePipeSubmit} 
+      <form
+        onSubmit={handlePipeSubmit}
         aria-label="Quick pipe resource URL ingestion"
         className="flex flex-col md:flex-row gap-4 bg-zinc-900/40 p-4 rounded-[32px] border border-zinc-800/80 backdrop-blur-sm"
       >

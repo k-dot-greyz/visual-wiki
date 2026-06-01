@@ -30,10 +30,10 @@ export default function AddResourceDialog({
       <Dialog.Portal>
         {/* Modal Overlay */}
         <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur z-50 transition-opacity" />
-        
+
         {/* Modal Content container */}
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <Dialog.Content 
+          <Dialog.Content
             className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden focus:outline-none shadow-2xl flex flex-col max-h-[90vh] transition-all"
             onOpenAutoFocus={(e) => {
               // Focus the first input field on open

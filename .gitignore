@@ -35,6 +35,11 @@ yarn-error.log*
 # user data
 resources.json
 
+# testing reports & local screenshots
+test-results/
+e2e/screenshots/
+e2e/report/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
