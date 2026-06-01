@@ -144,3 +144,23 @@ export async function deleteResourceAction(id: string) {
   revalidatePath("/");
   return { success: true };
 }
+
+export async function addResourceDirect(newRes: Omit<Resource, "id" | "addedAt">): Promise<Resource> {
+  const resource: Resource = {
+    ...newRes,
+    id: Date.now().toString(36),
+    addedAt: new Date().toISOString().split("T")[0],
+  };
+
+  const current = await getResources();
+  const updated = [resource, ...current];
+  const saved = await saveResources(updated);
+
+  if (!saved) {
+    throw new Error("Failed to save resource directly on the server.");
+  }
+
+  revalidatePath("/");
+  return resource;
+}
+
