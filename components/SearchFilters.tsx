@@ -115,20 +115,31 @@ export default function SearchFilters({
       {/* Filtering Row */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className={`absolute left-5 top-4 text-zinc-500 w-5 h-5 transition-colors ${isPending ? "text-indigo-500 animate-pulse" : ""}`} />
+          <label htmlFor="search-input" className="sr-only">
+            Search titles, descriptions, or tags
+          </label>
+          <Search 
+            aria-hidden="true"
+            className={`absolute left-5 top-4 text-zinc-500 w-5 h-5 transition-colors ${isPending ? "text-indigo-500 animate-pulse" : ""}`} 
+          />
           <input
+            id="search-input"
             type="text"
             placeholder="Search titles, descriptions, or tags..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-14 pl-14 bg-zinc-900 border border-zinc-800 rounded-3xl text-lg placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors text-white"
+            className="w-full h-14 pl-14 bg-zinc-900 border border-zinc-800 rounded-3xl text-lg placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
           />
         </div>
 
+        <label htmlFor="category-select" className="sr-only">
+          Filter by Category
+        </label>
         <select
+          id="category-select"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="h-14 px-6 bg-zinc-900 border border-zinc-800 rounded-3xl text-sm font-medium focus:outline-none focus:border-indigo-500 cursor-pointer text-white"
+          className="h-14 px-6 bg-zinc-900 border border-zinc-800 rounded-3xl text-sm font-medium focus:outline-none focus:border-indigo-500 cursor-pointer text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
         >
           <option value="">All Categories</option>
           <option value="official">Official</option>
@@ -141,38 +152,47 @@ export default function SearchFilters({
         <button
           onClick={handleRandom}
           disabled={resources.length === 0}
-          className="h-14 px-6 flex items-center gap-2 border border-zinc-700 hover:bg-zinc-900 active:bg-zinc-800 rounded-3xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200"
+          aria-label="Open a random resource link"
+          className="h-14 px-6 flex items-center gap-2 border border-zinc-700 hover:bg-zinc-900 active:bg-zinc-800 rounded-3xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
         >
-          <Shuffle className="w-4 h-4" /> Random
+          <Shuffle aria-hidden="true" className="w-4 h-4" /> Random
         </button>
       </div>
 
       {/* Ingestion Pipe Row */}
-      <form onSubmit={handlePipeSubmit} className="flex flex-col md:flex-row gap-4 bg-zinc-900/40 p-4 rounded-[32px] border border-zinc-800/80 backdrop-blur-sm">
+      <form 
+        onSubmit={handlePipeSubmit} 
+        aria-label="Quick pipe resource URL ingestion"
+        className="flex flex-col md:flex-row gap-4 bg-zinc-900/40 p-4 rounded-[32px] border border-zinc-800/80 backdrop-blur-sm"
+      >
         <div className="relative flex-1 flex items-center">
-          <Link2 className="absolute left-5 text-zinc-500 w-5 h-5" />
+          <label htmlFor="pipe-url-input" className="sr-only">
+            Git repository or webpage URL to pipe in
+          </label>
+          <Link2 aria-hidden="true" className="absolute left-5 text-zinc-500 w-5 h-5" />
           <input
+            id="pipe-url-input"
             type="text"
             placeholder="Pipe Git repository or web page (e.g. https://github.com/owner/repo)"
             value={pipeUrl}
             onChange={(e) => setPipeUrl(e.target.value)}
             disabled={isPiping}
-            className="w-full h-12 pl-14 pr-4 bg-zinc-950 border border-zinc-800 rounded-2xl text-base placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500/80 transition-colors text-white disabled:opacity-50"
+            className="w-full h-12 pl-14 pr-4 bg-zinc-950 border border-zinc-800 rounded-2xl text-base placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500/80 transition-colors text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-indigo-500/80 focus-visible:outline-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={isPiping || !pipeUrl.trim()}
-          className="h-12 px-6 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-2xl text-sm font-semibold text-white transition-colors cursor-pointer disabled:cursor-not-allowed"
+          className="h-12 px-6 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-2xl text-sm font-semibold text-white transition-colors cursor-pointer disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
         >
           {isPiping ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Piping...
+              <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Piping...
             </>
           ) : (
             <>
-              <Zap className="w-4 h-4 fill-white" /> Pipe It In!
+              <Zap aria-hidden="true" className="w-4 h-4 fill-white" /> Pipe It In!
             </>
           )}
         </button>

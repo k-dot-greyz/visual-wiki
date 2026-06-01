@@ -27,12 +27,12 @@ export default async function VisualWiki({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-7xl mx-auto px-8 py-16">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-12">
+      <main className="max-w-7xl mx-auto px-8 py-16">
+        <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-12">
           <div>
             <div className="flex items-center gap-4 mb-3">
               <div className="w-12 h-12 rounded-3xl bg-indigo-600 flex items-center justify-center">
-                <span className="text-3xl">🌿</span>
+                <span className="text-3xl" role="img" aria-label="Seedling icon">🌿</span>
               </div>
               <div>
                 <h1 className="font-semibold text-6xl tracking-tighter">
@@ -49,30 +49,30 @@ export default async function VisualWiki({
           </div>
 
           <HeaderActions resources={resources} />
-        </div>
+        </header>
 
         <SearchFilters initialSearch={search} initialCategory={category} resources={resources} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <section aria-label="Curated knowledge garden" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.length > 0 ? (
             filtered.map((resource) => (
               <ResourceCard key={resource.id} resource={resource} />
             ))
           ) : (
             <div className="col-span-full py-20 text-center">
-              <p className="text-6xl mb-4">🌱</p>
+              <p className="text-6xl mb-4" role="img" aria-label="Sprout">🌱</p>
               <p className="text-xl text-zinc-400">
                 No resources found. Add your first one!
               </p>
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="mt-16 text-center text-xs text-zinc-500">
+        <footer className="mt-16 text-center text-xs text-zinc-500">
           {resources.length} resources • Last synced{" "}
           {new Date().toLocaleDateString()}
-        </div>
-      </div>
+        </footer>
+      </main>
     </div>
   );
 }

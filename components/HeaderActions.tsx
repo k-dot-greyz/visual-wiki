@@ -53,15 +53,18 @@ export default function HeaderActions({ resources }: HeaderActionsProps) {
     <div className="flex items-center gap-3">
       <button
         onClick={exportForAI}
-        className="flex items-center gap-2 px-6 h-12 rounded-3xl border border-zinc-700 hover:bg-zinc-900 active:bg-zinc-800 transition-colors text-sm font-medium cursor-pointer text-zinc-300"
+        aria-label="Export all resources to JSON and copy AI agent prompt to clipboard"
+        className="flex items-center gap-2 px-6 h-12 rounded-3xl border border-zinc-700 hover:bg-zinc-900 active:bg-zinc-800 transition-colors text-sm font-medium cursor-pointer text-zinc-300 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
       >
-        <Download className="w-4 h-4" /> Export for AI
+        <Download aria-hidden="true" className="w-4 h-4" /> Export for AI
       </button>
       <button
         onClick={() => setIsAddOpen(true)}
-        className="flex items-center gap-2 px-6 h-12 bg-white text-black hover:bg-zinc-200 active:bg-zinc-300 rounded-3xl text-sm font-semibold transition-colors cursor-pointer"
+        aria-haspopup="dialog"
+        aria-label="Add new resource to garden"
+        className="flex items-center gap-2 px-6 h-12 bg-white text-black hover:bg-zinc-200 active:bg-zinc-300 rounded-3xl text-sm font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
       >
-        <Plus className="w-4 h-4" /> Add Resource
+        <Plus aria-hidden="true" className="w-4 h-4" /> Add Resource
       </button>
 
       <AddResourceDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
