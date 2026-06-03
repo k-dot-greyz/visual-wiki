@@ -1,9 +1,20 @@
 import ResourceCard from "@/components/ResourceCard";
 import HeaderActions from "@/components/HeaderActions";
 import SearchFilters from "@/components/SearchFilters";
+import {
+  applyGardenVisibility,
+  countHiddenByDefault,
+} from "@/lib/dexGardenFilters";
 import { getResources } from "./actions";
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+function paramFlag(value: string | string[] | undefined): boolean {
+  if (typeof value !== "string") {
+    return false;
+  }
+  return value === "1" || value === "true";
+}
 
 export default async function VisualWiki({
   searchParams,
@@ -13,10 +24,15 @@ export default async function VisualWiki({
   const resolvedParams = await searchParams;
   const search = typeof resolvedParams.search === "string" ? resolvedParams.search : "";
   const category = typeof resolvedParams.category === "string" ? resolvedParams.category : "";
+  const showArchive = paramFlag(resolvedParams.showArchive);
+  const showConfig = paramFlag(resolvedParams.showConfig);
 
   const resources = await getResources();
+  const visibility = { showArchive, showConfig };
+  const visiblePool = applyGardenVisibility(resources, visibility);
+  const hiddenCounts = countHiddenByDefault(resources);
 
-  const filtered = resources
+  const filtered = visiblePool
     .filter(
       (r) =>
         r.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -52,7 +68,16 @@ export default async function VisualWiki({
         </header>
 
         <main className="flex flex-col gap-12">
-          <SearchFilters initialSearch={search} initialCategory={category} resources={resources} />
+          <SearchFilters
+            initialSearch={search}
+            initialCategory={category}
+            initialShowArchive={showArchive}
+            initialShowConfig={showConfig}
+            resources={resources}
+            visibleCount={visiblePool.length}
+            hiddenArchiveCount={hiddenCounts.archive}
+            hiddenConfigCount={hiddenCounts.config}
+          />
 
           <section aria-label="Curated knowledge garden" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.length > 0 ? (
@@ -71,8 +96,15 @@ export default async function VisualWiki({
         </main>
 
         <footer className="pt-8 border-t border-zinc-900 text-center text-xs text-zinc-500">
-          {resources.length} resources • Last synced{" "}
-          {new Date().toLocaleDateString()}
+          Showing {filtered.length} of {visiblePool.length} visible (
+          {resources.length} total)
+          {!showArchive && hiddenCounts.archive > 0
+            ? ` • ${hiddenCounts.archive} archive hidden`
+            : ""}
+          {!showConfig && hiddenCounts.config > 0
+            ? ` • ${hiddenCounts.config} config hidden`
+            : ""}{" "}
+          • Last synced {new Date().toLocaleDateString()}
         </footer>
       </div>
     </div>

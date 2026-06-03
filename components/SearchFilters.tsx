@@ -3,19 +3,30 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Search, Shuffle, Zap, Link2, Loader2 } from "lucide-react";
+import { applyGardenVisibility } from "@/lib/dexGardenFilters";
 import { Resource } from "@/lib/types";
 import { toast } from "sonner";
 
 interface SearchFiltersProps {
   initialSearch: string;
   initialCategory: string;
+  initialShowArchive: boolean;
+  initialShowConfig: boolean;
   resources: Resource[];
+  visibleCount: number;
+  hiddenArchiveCount: number;
+  hiddenConfigCount: number;
 }
 
 export default function SearchFilters({
   initialSearch,
   initialCategory,
+  initialShowArchive,
+  initialShowConfig,
   resources,
+  visibleCount,
+  hiddenArchiveCount,
+  hiddenConfigCount,
 }: SearchFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -23,6 +34,8 @@ export default function SearchFilters({
 
   const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState(initialCategory);
+  const [showArchive, setShowArchive] = useState(initialShowArchive);
+  const [showConfig, setShowConfig] = useState(initialShowConfig);
 
   // Ingestion Piping State
   const [pipeUrl, setPipeUrl] = useState("");
@@ -37,12 +50,22 @@ export default function SearchFilters({
     setCategory(initialCategory);
   }, [initialCategory]);
 
+  useEffect(() => {
+    setShowArchive(initialShowArchive);
+  }, [initialShowArchive]);
+
+  useEffect(() => {
+    setShowConfig(initialShowConfig);
+  }, [initialShowConfig]);
+
   // Debounced filter push to the router
   useEffect(() => {
     const timer = setTimeout(() => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (category) params.set("category", category);
+      if (showArchive) params.set("showArchive", "1");
+      if (showConfig) params.set("showConfig", "1");
 
       const queryString = params.toString();
       const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
@@ -50,8 +73,15 @@ export default function SearchFilters({
       const currentParams = new URLSearchParams(window.location.search);
       const currentSearch = currentParams.get("search") || "";
       const currentCategory = currentParams.get("category") || "";
+      const currentArchive = currentParams.get("showArchive") === "1";
+      const currentConfig = currentParams.get("showConfig") === "1";
 
-      if (search !== currentSearch || category !== currentCategory) {
+      if (
+        search !== currentSearch ||
+        category !== currentCategory ||
+        showArchive !== currentArchive ||
+        showConfig !== currentConfig
+      ) {
         startTransition(() => {
           router.push(targetUrl, { scroll: false });
         });
@@ -59,11 +89,12 @@ export default function SearchFilters({
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [search, category, pathname, router]);
+  }, [search, category, showArchive, showConfig, pathname, router]);
 
   const handleRandom = () => {
-    if (resources.length === 0) return;
-    const random = resources[Math.floor(Math.random() * resources.length)];
+    const pool = applyGardenVisibility(resources, { showArchive, showConfig });
+    if (pool.length === 0) return;
+    const random = pool[Math.floor(Math.random() * pool.length)];
     window.open(random.link, "_blank", "noopener,noreferrer");
   };
 
@@ -151,12 +182,49 @@ export default function SearchFilters({
 
         <button
           onClick={handleRandom}
-          disabled={resources.length === 0}
+          disabled={visibleCount === 0}
           aria-label="Open a random resource link"
           className="h-14 px-6 flex items-center gap-2 border border-zinc-700 hover:bg-zinc-900 active:bg-zinc-800 rounded-3xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
         >
           <Shuffle aria-hidden="true" className="w-4 h-4" /> Random
         </button>
+      </div>
+
+      {/* Dex garden visibility (archive + configuration excluded by default) */}
+      <div
+        className="flex flex-wrap items-center gap-3 text-sm text-zinc-400"
+        role="group"
+        aria-label="Dex import visibility filters"
+      >
+        <span className="text-zinc-500 font-medium">Dex garden:</span>
+        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showArchive}
+            onChange={(e) => setShowArchive(e.target.checked)}
+            className="rounded border-zinc-600 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-zinc-950"
+          />
+          <span>
+            Show archive
+            {hiddenArchiveCount > 0 && !showArchive ? (
+              <span className="text-zinc-600"> ({hiddenArchiveCount} hidden)</span>
+            ) : null}
+          </span>
+        </label>
+        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showConfig}
+            onChange={(e) => setShowConfig(e.target.checked)}
+            className="rounded border-zinc-600 bg-zinc-900 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-zinc-950"
+          />
+          <span>
+            Show configuration
+            {hiddenConfigCount > 0 && !showConfig ? (
+              <span className="text-zinc-600"> ({hiddenConfigCount} hidden)</span>
+            ) : null}
+          </span>
+        </label>
       </div>
 
       {/* Ingestion Pipe Row */}
