@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { Resource } from "@/lib/types";
+import { isAllowedUrl } from "@/lib/security";
 
 const DATA_FILE = path.join(process.cwd(), "resources.json");
 
@@ -104,6 +105,14 @@ export async function addResourceAction(
     return { success: false, error: "Title and Link are required fields." };
   }
 
+  if (!isAllowedUrl(link)) {
+    return { success: false, error: "Link must be a valid http:// or https:// URL." };
+  }
+
+  if (image && !isAllowedUrl(image)) {
+    return { success: false, error: "Image URL must be a valid http:// or https:// URL." };
+  }
+
   const tags = tagsString
     .split(",")
     .map((t) => t.trim())
@@ -146,6 +155,13 @@ export async function deleteResourceAction(id: string) {
 }
 
 export async function addResourceDirect(newRes: Omit<Resource, "id" | "addedAt">): Promise<Resource> {
+  if (!isAllowedUrl(newRes.link)) {
+    throw new Error("Resource link must use http or https scheme.");
+  }
+  if (!isAllowedUrl(newRes.image)) {
+    throw new Error("Resource image must use http or https scheme.");
+  }
+
   const resource: Resource = {
     ...newRes,
     id: Date.now().toString(36),

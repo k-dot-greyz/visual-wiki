@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResources, addResourceDirect } from "@/app/actions";
 import { Resource } from "@/lib/types";
+import { isSafeUrl } from "@/lib/security";
 
 // GET Handshake / Sync info
 export async function GET() {
@@ -37,48 +38,7 @@ export async function GET() {
   }
 }
 
-// Helper to validate that a URL does not resolve to local, private, or loopback networks (SSRF defense)
-function isSafeUrl(urlString: string): boolean {
-  try {
-    const url = new URL(urlString);
-    const hostname = url.hostname.toLowerCase();
-
-    // Check blocklist for typical local/private hosts
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "0.0.0.0" ||
-      hostname === "[::1]" ||
-      hostname.endsWith(".local") ||
-      hostname.endsWith(".internal")
-    ) {
-      return false;
-    }
-
-    // IPv4 private & link-local checks
-    // 10.x.x.x
-    if (/^10\./.test(hostname)) return false;
-    // 192.168.x.x
-    if (/^192\.168\./.test(hostname)) return false;
-    // 172.16.x.x - 172.31.x.x
-    if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname)) return false;
-    // 169.254.x.x (AWS / Cloud Providers metadata API range)
-    if (/^169\.254\./.test(hostname)) return false;
-
-    // IPv6 link-local and unique local address checks
-    if (
-      hostname.startsWith("fe80:") ||
-      hostname.startsWith("fc00:") ||
-      hostname.startsWith("fd00:")
-    ) {
-      return false;
-    }
-
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
+// isSafeUrl is imported from @/lib/security above.
 
 // Helper to extract GitHub owner and repo from URL
 function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
@@ -138,18 +98,55 @@ async function fetchGitHubMetadata(owner: string, repo: string) {
 
 // Scrape title, description, and Open Graph image from a general web page
 async function fetchWebpageMetadata(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    },
-    next: { revalidate: 60 },
-  });
+  // Abort after 15 s to prevent the server from hanging on slow/infinite responses
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
-  if (!response.ok) {
-    throw new Error(`Webpage responded with status ${response.status}`);
+  let html: string;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Webpage responded with status ${response.status}`);
+    }
+
+    // Stream the body with a 1 MB cap to prevent OOM from giant/infinite responses
+    const MAX_BYTES = 1_024 * 1_024;
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("Response body is not readable");
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.byteLength;
+        chunks.push(value);
+        if (totalBytes >= MAX_BYTES) {
+          reader.cancel().catch(() => {});
+          break;
+        }
+      }
+    } catch (readErr) {
+      reader.cancel().catch(() => {});
+      throw readErr;
+    }
+
+    const merged = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    html = new TextDecoder("utf-8", { fatal: false }).decode(merged);
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const html = await response.text();
 
   // Simple clean-up to prevent regex matching inside script tags
   const bodyLessHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
