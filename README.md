@@ -60,6 +60,10 @@ lib/
 - Replace seed data in `app/page.tsx` (`initialResources`)
 - Categories: `official`, `example`, `tutorial`, `repo`, `pattern`
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for submodule boundaries, architecture guidelines, and the fork-and-PR workflow.
+
 ## License
 
 MIT — do whatever you want with it.
