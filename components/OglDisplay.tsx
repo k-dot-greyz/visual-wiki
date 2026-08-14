@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { readFlexPref, shouldMountOgl, type FlexPref } from "@/lib/flex-gate";
 import type { TreeNode } from "@/lib/github-hydrate";
 
+/**
+ * Collects device capabilities, user preferences, and the configured flexibility preference.
+ *
+ * @param pref - The configured flexibility preference
+ * @returns The collected motion, pointer, hover, data-saver, memory, and flexibility signals
+ */
 function readSignals(pref: FlexPref) {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const finePointer = window.matchMedia("(pointer: fine)").matches;
@@ -15,6 +21,12 @@ function readSignals(pref: FlexPref) {
   return { reducedMotion, finePointer, hover, saveData, deviceMemory, pref };
 }
 
+/**
+ * Renders an animated point-based WebGL display when motion and device preferences permit it.
+ *
+ * @param tree - Data whose size determines the number of rendered points.
+ * @returns The WebGL display when enabled, or `null` when it is disabled.
+ */
 export default function OglDisplay({ tree }: { tree: TreeNode[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [allowed, setAllowed] = useState(false);

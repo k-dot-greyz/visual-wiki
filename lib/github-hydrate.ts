@@ -17,6 +17,12 @@ export type HydrateErr = { ok: false; error: string };
 
 const TREE_CAP = 80;
 
+/**
+ * Extracts the owner and repository names from a GitHub repository URL.
+ *
+ * @param url - The GitHub repository URL to parse
+ * @returns The repository owner and name, or `null` for an invalid URL
+ */
 export function parseGitHubRepo(url: string): { owner: string; repo: string } | null {
   try {
     const match = url.match(/github\.com\/([^/]+)\/([^/]+)/i);
@@ -32,6 +38,13 @@ export function parseGitHubRepo(url: string): { owner: string; repo: string } | 
 
 type FetchLike = typeof fetch;
 
+/**
+ * Hydrates a public GitHub repository into repository metadata, a playable card, and a file tree.
+ *
+ * @param repoUrl - The GitHub repository URL to hydrate
+ * @param opts - Optional dependencies used during hydration
+ * @returns Repository metadata and tree on success, or an error message when validation or metadata retrieval fails
+ */
 export async function hydrateGithub(
   repoUrl: string,
   opts: { fetch?: FetchLike } = {},

@@ -7,6 +7,9 @@ export const metadata = {
   description: "Hydrate a public GitHub repo into a playable card — tree display, sandboxed iframe, stub runtimes.",
 };
 
+/**
+ * Renders the playground page with repository guidance and the interactive playground shell.
+ */
 export default function PlayPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">

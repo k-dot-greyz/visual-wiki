@@ -2,6 +2,12 @@
 
 import type { TreeNode } from "@/lib/github-hydrate";
 
+/**
+ * Renders a repository tree visualization and file listing.
+ *
+ * @param tree - The repository entries to display.
+ * @param truncated - Whether the listing contains only a partial tree.
+ */
 export default function RepoTree({
   tree,
   truncated,

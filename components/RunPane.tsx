@@ -3,6 +3,11 @@
 import type { PlayableCard } from "@/lib/playable-card";
 import { iframeSandbox, runtimeStubCopy } from "@/lib/run-pane";
 
+/**
+ * Renders a card's live preview or runtime information.
+ *
+ * @param card - The card whose runtime interface is displayed
+ */
 export default function RunPane({ card }: { card: PlayableCard }) {
   const attrs = iframeSandbox();
 

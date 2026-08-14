@@ -5,6 +5,9 @@ import { readFlexPref, type FlexPref } from "@/lib/flex-gate";
 
 const KEY = "gw-flex";
 
+/**
+ * Renders a button for viewing and cycling the extra-motion preference.
+ */
 export default function ExtraMotionToggle() {
   const [pref, setPref] = useState<FlexPref>("auto");
 

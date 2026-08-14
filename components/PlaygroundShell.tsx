@@ -8,6 +8,9 @@ import RunPane from "./RunPane";
 import OglDisplay from "./OglDisplay";
 import ExtraMotionToggle from "./ExtraMotionToggle";
 
+/**
+ * Loads and displays a public GitHub repository in the playground.
+ */
 export default function PlaygroundShell() {
   const router = useRouter();
   const params = useSearchParams();

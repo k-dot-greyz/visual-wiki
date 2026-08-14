@@ -3,7 +3,11 @@ import { getResources, addResourceDirect } from "@/app/actions";
 import { Resource } from "@/lib/types";
 import { isSafeUrl } from "@/lib/safe-url";
 
-// GET Handshake / Sync info
+/**
+ * Provides resource synchronization data and schema information.
+ *
+ * @returns A JSON response containing readiness status, resource count, fingerprint, schema, and selected resource fields, or an error response with status 500 if retrieval fails.
+ */
 export async function GET() {
   try {
     const resources = await getResources();
@@ -38,7 +42,11 @@ export async function GET() {
   }
 }
 
-// Helper to extract GitHub owner and repo from URL
+/**
+ * Extracts the owner and repository names from a GitHub URL.
+ *
+ * @returns The parsed owner and repository names, or `null` when parsing fails.
+ */
 function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   try {
     const match = url.match(/github\.com\/([^/]+)\/([^/]+)/i);

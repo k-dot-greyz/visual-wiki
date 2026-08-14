@@ -1,4 +1,9 @@
-/** SSRF guard — blocks loopback, private, and link-local hosts. */
+/**
+ * Determines whether a URL is suitable for external HTTP(S) requests.
+ *
+ * @param urlString - The URL to validate
+ * @returns `true` if the URL is valid, uses HTTP or HTTPS, and targets an allowed host, `false` otherwise.
+ */
 export function isSafeUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString);

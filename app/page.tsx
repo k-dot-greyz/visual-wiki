@@ -6,6 +6,12 @@ import { getResources } from "./actions";
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+/**
+ * Renders the searchable and filterable resource wiki page.
+ *
+ * @param searchParams - URL search parameters used to filter resources by search text and category.
+ * @returns The rendered resource wiki page.
+ */
 export default async function VisualWiki({
   searchParams,
 }: {
