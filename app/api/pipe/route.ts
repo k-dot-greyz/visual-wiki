@@ -201,6 +201,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (!isSafeUrl(link)) {
+        return NextResponse.json(
+          { error: "SSRF Prevention: link must be an http or https URL pointing to a public host." },
+          { status: 400 }
+        );
+      }
+
       const resource = await addResourceDirect({
         title,
         description: description || "No description provided.",
