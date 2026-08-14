@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ResourceCard from "@/components/ResourceCard";
 import HeaderActions from "@/components/HeaderActions";
 import SearchFilters from "@/components/SearchFilters";
@@ -45,6 +46,14 @@ export default async function VisualWiki({
             </div>
             <p className="text-zinc-500 max-w-md">
               Curate once. Feed your AI agents forever.
+            </p>
+            <p className="mt-3">
+              <Link
+                href="/play"
+                className="text-sm text-indigo-300 hover:text-indigo-200 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded"
+              >
+                Open playground
+              </Link>
             </p>
           </div>
 

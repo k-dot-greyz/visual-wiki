@@ -11,6 +11,7 @@ Curate once. Feed your agents forever.
 - **Export for AI** — downloads JSON + copies a prompt-ready summary
 - **Copy for AI** per card — structured text block for agents
 - Random resource picker
+- **Playground** (`/play`) — hydrate a public GitHub repo into a playable card (tree + sandboxed iframe). Node in-tab and hosted venv are stubbed.
 
 ## Stack
 
@@ -39,19 +40,18 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm test` | Vitest unit tests (schema, GitHub hydrate mocks, flex gate) |
+| `npm run test:e2e` | Playwright (app must be reachable; default http://localhost:3000) |
 
 ## Project structure
 
 ```
 app/
-  layout.tsx      # Root layout + fonts + toaster
-  page.tsx        # Main wiki UI
-  globals.css     # Tailwind + card hover styles
-components/
-  ResourceCard.tsx
-  AddResourceDialog.tsx
+  play/page.tsx   # Public GitHub playground
+  api/play/       # Hydrate endpoint (mocked in e2e)
 lib/
-  types.ts        # Resource interface
+  types.ts        # Resource + optional playable fields
+  playable-card.ts
 ```
 
 ## Customize
