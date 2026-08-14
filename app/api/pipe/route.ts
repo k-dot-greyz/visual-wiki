@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResources, addResourceDirect } from "@/app/actions";
 import { Resource } from "@/lib/types";
-import { isSafeUrlResolved, safeFetch } from "@/lib/safe-url";
+import { isSafeUrl, isSafeUrlResolved, safeFetch, readCappedText } from "@/lib/safe-url";
 
 // GET Handshake / Sync info
 export async function GET() {
@@ -96,18 +96,27 @@ async function fetchGitHubMetadata(owner: string, repo: string) {
 
 // Scrape title, description, and Open Graph image from a general web page
 async function fetchWebpageMetadata(url: string) {
-  const response = await safeFetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    },
-    next: { revalidate: 60 },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
-  if (!response.ok) {
-    throw new Error(`Webpage responded with status ${response.status}`);
+  let html: string;
+  try {
+    const response = await safeFetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: controller.signal,
+      next: { revalidate: 60 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Webpage responded with status ${response.status}`);
+    }
+
+    html = await readCappedText(response);
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const html = await response.text();
 
   // Simple clean-up to prevent regex matching inside script tags
   const bodyLessHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
@@ -180,7 +189,9 @@ async function fetchWebpageMetadata(url: string) {
     category,
     tags,
     link: url,
-    image: image || `https://picsum.photos/id/${Math.floor(Math.random() * 800) + 100}/800/450`,
+    image: image && isSafeUrl(image)
+      ? image
+      : `https://picsum.photos/id/${Math.floor(Math.random() * 800) + 100}/800/450`,
   };
 }
 
@@ -197,6 +208,20 @@ export async function POST(request: NextRequest) {
       if (!title || !link) {
         return NextResponse.json(
           { error: "Payload title and link are required" },
+          { status: 400 }
+        );
+      }
+
+      if (!isSafeUrl(link)) {
+        return NextResponse.json(
+          { error: "SSRF Prevention: link must be an http or https URL pointing to a public host." },
+          { status: 400 }
+        );
+      }
+
+      if (image && !isSafeUrl(image)) {
+        return NextResponse.json(
+          { error: "SSRF Prevention: image must be an http or https URL pointing to a public host." },
           { status: 400 }
         );
       }

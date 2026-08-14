@@ -37,7 +37,8 @@ function isPrivateIpv4(ip: string): boolean {
 function isPrivateIpv6(ip: string): boolean {
   const lower = ip.toLowerCase();
   if (lower === "::1" || lower === "0:0:0:0:0:0:0:1") return true;
-  if (lower.startsWith("fe80:")) return true;
+  // fe80::/10 — fe80 through febf, not just the fe80: prefix
+  if (/^fe[89ab][0-9a-f]:/i.test(lower)) return true;
   if (/^f[cd][0-9a-f]/i.test(lower)) return true;
   const mapped = parseIpv4Mapped(lower);
   if (mapped) return isPrivateIpv4(mapped);
@@ -125,4 +126,56 @@ export async function safeFetch(
   }
 
   throw new Error("SSRF Prevention: too many redirects");
+}
+
+const DEFAULT_MAX_BODY_BYTES = 1_024 * 1_024;
+
+/** Read a Response body with a hard byte cap so a hostile server cannot OOM the pipe. */
+export async function readCappedText(
+  response: Response,
+  maxBytes = DEFAULT_MAX_BODY_BYTES,
+): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const text = await response.text();
+    return text.length > maxBytes ? text.slice(0, maxBytes) : text;
+  }
+
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      const remaining = maxBytes - totalBytes;
+      if (remaining <= 0) {
+        await reader.cancel().catch(() => {});
+        break;
+      }
+
+      if (value.byteLength > remaining) {
+        chunks.push(value.slice(0, remaining));
+        totalBytes += remaining;
+        await reader.cancel().catch(() => {});
+        break;
+      }
+
+      chunks.push(value);
+      totalBytes += value.byteLength;
+    }
+  } catch (err) {
+    await reader.cancel().catch(() => {});
+    throw err;
+  }
+
+  const merged = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(merged);
 }
