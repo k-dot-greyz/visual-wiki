@@ -1,3 +1,5 @@
+import type { PlayableCard } from "./playable-card";
+
 export interface Resource {
   id: string;
   title: string;
@@ -7,4 +9,8 @@ export interface Resource {
   link: string;
   image: string;
   addedAt: string;
+  kind?: "resource" | "playable";
+  runtime?: PlayableCard["runtime"];
+  entry?: string;
+  display?: PlayableCard["display"];
 }
