@@ -41,11 +41,11 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
 | `npm test` | Vitest unit tests (schema, GitHub hydrate mocks, flex gate) |
-| `npm run test:e2e` | Playwright (app must be reachable; default http://localhost:3000) |
+| `npm run test:e2e` | Playwright (starts `npm run dev` when no reusable local server is available; default http://localhost:3000) |
 
 ## Project structure
 
-```
+```text
 app/
   play/page.tsx   # Public GitHub playground
   api/play/       # Hydrate endpoint (mocked in e2e)

@@ -9,8 +9,20 @@ describe("parseGitHubRepo", () => {
     });
   });
 
+  it("parses owner/repo when query params are present", () => {
+    expect(parseGitHubRepo("https://github.com/nari-labs/dia?tab=readme")).toEqual({
+      owner: "nari-labs",
+      repo: "dia",
+    });
+  });
+
   it("returns null for non-github URLs", () => {
     expect(parseGitHubRepo("https://gitlab.com/nari-labs/dia")).toBeNull();
+  });
+
+  it("rejects deceptive hostnames that embed github.com", () => {
+    expect(parseGitHubRepo("https://evilgithub.com/nari-labs/dia")).toBeNull();
+    expect(parseGitHubRepo("https://notgithub.com/owner/repo")).toBeNull();
   });
 });
 
@@ -87,5 +99,15 @@ describe("hydrateGithub", () => {
     const result = await hydrateGithub("https://localhost/nari-labs/dia", { fetch: fetchMock });
     expect(result.ok).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns a hydration error when fetch rejects", async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    const result = await hydrateGithub("https://github.com/nari-labs/dia", { fetch: fetchMock });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe("Failed to reach GitHub");
   });
 });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResources, addResourceDirect } from "@/app/actions";
 import { Resource } from "@/lib/types";
-import { isSafeUrl } from "@/lib/safe-url";
+import { isSafeUrlResolved, safeFetch } from "@/lib/safe-url";
 
 // GET Handshake / Sync info
 export async function GET() {
@@ -96,7 +96,7 @@ async function fetchGitHubMetadata(owner: string, repo: string) {
 
 // Scrape title, description, and Open Graph image from a general web page
 async function fetchWebpageMetadata(url: string) {
-  const response = await fetch(url, {
+  const response = await safeFetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     },
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isSafeUrl(url)) {
+    if (!(await isSafeUrlResolved(url))) {
       return NextResponse.json(
         { error: "SSRF Prevention: Ingestion of internal, loopback, or private network ranges is prohibited." },
         { status: 400 }
