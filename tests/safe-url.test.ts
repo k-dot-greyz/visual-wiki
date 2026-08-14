@@ -18,6 +18,9 @@ describe("isSafeUrl", () => {
     expect(isSafeUrl("http://127.0.0.2/x")).toBe(false);
     expect(isSafeUrl("http://127.1.2.3/x")).toBe(false);
     expect(isSafeUrl("http://127.255.255.255/x")).toBe(false);
+    expect(isSafeUrl("http://2130706433/")).toBe(false);
+    expect(isSafeUrl("http://127.1/")).toBe(false);
+    expect(isSafeUrl("http://0x7f.0.0.1/")).toBe(false);
   });
 
   it("blocks bracketed IPv6 private and link-local literals", () => {

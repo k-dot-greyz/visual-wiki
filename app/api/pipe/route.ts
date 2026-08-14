@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResources, addResourceDirect } from "@/app/actions";
 import { Resource } from "@/lib/types";
+import { parseGitHubRepo } from "@/lib/github-hydrate";
 import { isSafeUrl, isSafeUrlResolved, safeFetch, readCappedText } from "@/lib/safe-url";
 
 // GET Handshake / Sync info
@@ -36,22 +37,6 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
-// Helper to extract GitHub owner and repo from URL
-function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
-  try {
-    const match = url.match(/github\.com\/([^/]+)\/([^/]+)/i);
-    if (match && match[1] && match[2]) {
-      // Remove trailing .git or trailing slashes/hashes
-      const owner = match[1];
-      const repo = match[2].replace(/\.git$/i, "").split(/[?#]/)[0];
-      return { owner, repo };
-    }
-  } catch (e) {
-    // Ignore parsing error
-  }
-  return null;
 }
 
 // Fetch GitHub repository metadata from the public API
@@ -269,7 +254,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. ATTEMPT GITHUB API PARSING IF MATCHED
-    const githubParams = parseGitHubUrl(url);
+    const githubParams = parseGitHubRepo(url);
     if (githubParams && type !== "web") {
       try {
         const parsedMetadata = await fetchGitHubMetadata(githubParams.owner, githubParams.repo);
