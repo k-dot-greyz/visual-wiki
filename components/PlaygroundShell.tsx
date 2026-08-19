@@ -19,22 +19,32 @@ export default function PlaygroundShell() {
 
   useEffect(() => {
     if (!initial) return;
-    void load(initial);
+    const controller = new AbortController();
+    void load(initial, controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
-  async function load(raw: string) {
+  async function load(raw: string, signal?: AbortSignal) {
     setPending(true);
     setError(null);
-    const res = await fetch(`/api/play?repo=${encodeURIComponent(raw)}`);
-    const body = await res.json();
-    setPending(false);
-    if (!body.ok) {
+    try {
+      const res = await fetch(`/api/play?repo=${encodeURIComponent(raw)}`, { signal });
+      const body = await res.json();
+      if (signal?.aborted) return;
+      if (!body.ok) {
+        setResult(null);
+        setError(body.error ?? "Could not hydrate that repository.");
+        return;
+      }
+      setResult(body as HydrateOk);
+    } catch (err) {
+      if (signal?.aborted || (err instanceof DOMException && err.name === "AbortError")) return;
       setResult(null);
-      setError(body.error ?? "Could not hydrate that repository.");
-      return;
+      setError("Could not hydrate that repository.");
+    } finally {
+      if (!signal?.aborted) setPending(false);
     }
-    setResult(body as HydrateOk);
   }
 
   function onSubmit(e: FormEvent) {

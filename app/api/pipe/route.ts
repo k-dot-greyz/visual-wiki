@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResources, addResourceDirect } from "@/app/actions";
 import { Resource } from "@/lib/types";
-import { isSafeUrl } from "@/lib/safe-url";
+import { parseGitHubRepo } from "@/lib/github-hydrate";
+import { isSafeUrl, isSafeUrlResolved, safeFetch, readCappedText } from "@/lib/safe-url";
 
 // GET Handshake / Sync info
 export async function GET() {
@@ -36,22 +37,6 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
-// Helper to extract GitHub owner and repo from URL
-function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
-  try {
-    const match = url.match(/github\.com\/([^/]+)\/([^/]+)/i);
-    if (match && match[1] && match[2]) {
-      // Remove trailing .git or trailing slashes/hashes
-      const owner = match[1];
-      const repo = match[2].replace(/\.git$/i, "").split(/[?#]/)[0];
-      return { owner, repo };
-    }
-  } catch (e) {
-    // Ignore parsing error
-  }
-  return null;
 }
 
 // Fetch GitHub repository metadata from the public API
@@ -96,18 +81,27 @@ async function fetchGitHubMetadata(owner: string, repo: string) {
 
 // Scrape title, description, and Open Graph image from a general web page
 async function fetchWebpageMetadata(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    },
-    next: { revalidate: 60 },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
-  if (!response.ok) {
-    throw new Error(`Webpage responded with status ${response.status}`);
+  let html: string;
+  try {
+    const response = await safeFetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: controller.signal,
+      next: { revalidate: 60 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Webpage responded with status ${response.status}`);
+    }
+
+    html = await readCappedText(response);
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const html = await response.text();
 
   // Simple clean-up to prevent regex matching inside script tags
   const bodyLessHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
@@ -180,7 +174,9 @@ async function fetchWebpageMetadata(url: string) {
     category,
     tags,
     link: url,
-    image: image || `https://picsum.photos/id/${Math.floor(Math.random() * 800) + 100}/800/450`,
+    image: image && isSafeUrl(image)
+      ? image
+      : `https://picsum.photos/id/${Math.floor(Math.random() * 800) + 100}/800/450`,
   };
 }
 
@@ -197,6 +193,20 @@ export async function POST(request: NextRequest) {
       if (!title || !link) {
         return NextResponse.json(
           { error: "Payload title and link are required" },
+          { status: 400 }
+        );
+      }
+
+      if (!isSafeUrl(link)) {
+        return NextResponse.json(
+          { error: "SSRF Prevention: link must be an http or https URL pointing to a public host." },
+          { status: 400 }
+        );
+      }
+
+      if (image && !isSafeUrl(image)) {
+        return NextResponse.json(
+          { error: "SSRF Prevention: image must be an http or https URL pointing to a public host." },
           { status: 400 }
         );
       }
@@ -221,7 +231,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isSafeUrl(url)) {
+    if (!(await isSafeUrlResolved(url))) {
       return NextResponse.json(
         { error: "SSRF Prevention: Ingestion of internal, loopback, or private network ranges is prohibited." },
         { status: 400 }
@@ -244,7 +254,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. ATTEMPT GITHUB API PARSING IF MATCHED
-    const githubParams = parseGitHubUrl(url);
+    const githubParams = parseGitHubRepo(url);
     if (githubParams && type !== "web") {
       try {
         const parsedMetadata = await fetchGitHubMetadata(githubParams.owner, githubParams.repo);

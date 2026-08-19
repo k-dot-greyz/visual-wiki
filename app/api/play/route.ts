@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
   }
 
   const result = await hydrateGithub(repoUrl);
-  const status = result.ok ? 200 : result.error.match(/private/i) ? 404 : 502;
+  const status =
+    result.ok ? 200 : result.error.match(/private|responded 404/i) ? 404 : 502;
   return NextResponse.json(result, {
     status: result.ok ? 200 : status,
     headers: {
