@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { HydrateOk } from "@/lib/github-hydrate";
+import { announce } from "@/lib/wiki-bus";
 import RepoTree from "./RepoTree";
 import RunPane from "./RunPane";
 import OglDisplay from "./OglDisplay";
@@ -53,6 +54,38 @@ export default function PlaygroundShell() {
     router.push(`/play?repo=${encodeURIComponent(next)}`);
   }
 
+  async function plant() {
+    if (!result) return;
+    try {
+      const res = await fetch("/api/pipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "raw",
+          payload: {
+            title: result.title,
+            description: result.description,
+            category: "repo",
+            tags: ["playable", result.language].filter(Boolean),
+            link: result.card.repo,
+            kind: "playable",
+            runtime: result.card.runtime,
+            entry: result.card.entry,
+            display: result.card.display,
+          },
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setError(body.error ?? "Could not plant that repository.");
+        return;
+      }
+      announce("Planted in garden");
+    } catch {
+      setError("Could not plant that repository.");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -97,6 +130,13 @@ export default function PlaygroundShell() {
             <RepoTree tree={result.tree} truncated={result.truncated} />
             <RunPane card={result.card} />
           </div>
+          <button
+            type="button"
+            onClick={() => void plant()}
+            className="h-12 px-6 w-fit rounded-3xl border border-indigo-400 text-indigo-200 text-sm font-semibold hover:bg-indigo-500/10 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+          >
+            Plant in garden
+          </button>
         </div>
       )}
 
