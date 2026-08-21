@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Search, Shuffle, Zap, Link2, Loader2 } from "lucide-react";
 import { Resource } from "@/lib/types";
 import { toast } from "sonner";
+import { announce, inspectResource } from "@/lib/wiki-bus";
 
 interface SearchFiltersProps {
   initialSearch: string;
@@ -27,6 +28,7 @@ export default function SearchFilters({
   // Ingestion Piping State
   const [pipeUrl, setPipeUrl] = useState("");
   const [isPiping, setIsPiping] = useState(false);
+  const [pipeError, setPipeError] = useState<string | null>(null);
 
   // Sync state if URL changes externally (e.g. back button)
   useEffect(() => {
@@ -64,7 +66,8 @@ export default function SearchFilters({
   const handleRandom = () => {
     if (resources.length === 0) return;
     const random = resources[Math.floor(Math.random() * resources.length)];
-    window.open(random.link, "_blank", "noopener,noreferrer");
+    announce(`Inspecting ${random.title}`);
+    inspectResource(random);
   };
 
   const handlePipeSubmit = async (e: React.FormEvent) => {
@@ -78,6 +81,7 @@ export default function SearchFilters({
     }
 
     setIsPiping(true);
+    setPipeError(null);
     const toastId = toast.loading("Piping resource into the garden...");
 
     try {
@@ -102,9 +106,11 @@ export default function SearchFilters({
         setPipeUrl("");
         router.refresh(); // Fetch new server data
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.dismiss(toastId);
-      toast.error(err.message || "Failed to pipe resource. Verify the URL.");
+      const message = err instanceof Error ? err.message : "Failed to pipe resource. Verify the URL.";
+      setPipeError(message);
+      toast.error(message);
     } finally {
       setIsPiping(false);
     }
@@ -112,8 +118,7 @@ export default function SearchFilters({
 
   return (
     <div className="space-y-6 mb-12">
-      {/* Filtering Row */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div role="search" className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <label htmlFor="search-input" className="sr-only">
             Search titles, descriptions, or tags
@@ -150,9 +155,10 @@ export default function SearchFilters({
         </select>
 
         <button
+          type="button"
           onClick={handleRandom}
           disabled={resources.length === 0}
-          aria-label="Open a random resource link"
+          aria-label="Inspect a random garden resource"
           className="h-14 px-6 flex items-center gap-2 border border-zinc-700 hover:bg-zinc-900 active:bg-zinc-800 rounded-3xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
         >
           <Shuffle aria-hidden="true" className="w-4 h-4" /> Random
@@ -184,6 +190,8 @@ export default function SearchFilters({
         <button
           type="submit"
           disabled={isPiping || !pipeUrl.trim()}
+          aria-busy={isPiping}
+          aria-label="Pipe It In!"
           className="h-12 px-6 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-2xl text-sm font-semibold text-white transition-colors cursor-pointer disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
         >
           {isPiping ? (
@@ -197,6 +205,11 @@ export default function SearchFilters({
           )}
         </button>
       </form>
+      {pipeError && (
+        <p role="alert" className="text-sm text-rose-400 px-2">
+          {pipeError}
+        </p>
+      )}
     </div>
   );
 }

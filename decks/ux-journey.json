@@ -52,9 +52,9 @@
               "selector": "footer"
             },
             {
-              "action": "expectVisible",
-              "role": "link",
-              "name": "Skip to main content"
+              "action": "expectCount",
+              "selector": "a[href='#main-content']",
+              "count": 1
             },
             {
               "action": "expectText",
@@ -581,6 +581,15 @@
           ],
           "cleanup": {
             "id": "e2e-ux-pipe"
+          },
+          "seed": {
+            "id": "e2e-ux-pipe",
+            "title": "Piped Example",
+            "description": "Mock pipe",
+            "category": "example",
+            "tags": ["pipe"],
+            "link": "https://example.com",
+            "image": "https://picsum.photos/id/10/800/450"
           }
         }
       }

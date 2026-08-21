@@ -60,7 +60,7 @@ export default async function VisualWiki({
           <HeaderActions resources={resources} />
         </header>
 
-        <main className="flex flex-col gap-12">
+        <main id="main-content" tabIndex={-1} className="flex flex-col gap-12 outline-none">
           <SearchFilters initialSearch={search} initialCategory={category} resources={resources} />
 
           <section aria-label="Curated knowledge garden" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -69,7 +69,7 @@ export default async function VisualWiki({
                 <ResourceCard key={resource.id} resource={resource} />
               ))
             ) : (
-              <div className="col-span-full py-20 text-center">
+              <div data-testid="wiki-garden-empty" className="col-span-full py-20 text-center">
                 <p className="text-6xl mb-4" role="img" aria-label="Sprout">🌱</p>
                 <p className="text-xl text-zinc-400">
                   No resources found. Add your first one!

@@ -15,3 +15,12 @@ body {
   transform: translateY(-6px);
   box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .wiki-card,
+  .wiki-card:hover {
+    transform: none;
+    box-shadow: none;
+    transition: none;
+  }
+}

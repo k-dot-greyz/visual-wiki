@@ -22,9 +22,11 @@ export default function ExtraMotionToggle() {
   return (
     <button
       type="button"
-      aria-pressed={pref !== "off"}
+      data-testid="wiki-flex-toggle"
+      aria-label="Extra motion preference"
+      aria-valuetext={pref}
       onClick={cycle}
-      className="text-xs text-zinc-500 hover:text-zinc-300 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded-lg px-2 py-1"
+      className="text-xs text-zinc-500 hover:text-zinc-300 min-h-11 px-3 rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
     >
       Extra motion: {pref}
     </button>

@@ -143,15 +143,9 @@ test.describe("Visual Wiki — Basic Smoke and Accessibility Tests", () => {
     const deleteBtn = page.locator(`article:has-text('${testTitle}')`).getByRole("button", { name: /Delete resource/ });
     await expect(deleteBtn).toBeVisible();
 
-    // Playwright handles javascript alert confirm dialogs by accepting them automatically
-    page.once("dialog", async (dialog) => {
-      console.log(`  - Browser Dialog prompted: "${dialog.message()}"`);
-      console.log("  - Accepting dialog confirmation...");
-      await dialog.accept();
-    });
-
     console.log("  - Clicking delete button...");
     await deleteBtn.click();
+    await page.getByRole("dialog", { name: "Delete resource?" }).getByRole("button", { name: "Delete" }).click();
 
     // Verify card is removed
     await expect(newCard).not.toBeVisible();

@@ -24,7 +24,7 @@ export default function PlayPage() {
             Live sites iframe here. Node in-tab and hosted venv are the next pipes.
           </p>
         </header>
-        <main>
+        <main id="main-content" tabIndex={-1} className="outline-none">
           <Suspense fallback={<p className="text-sm text-zinc-500">Loading playground…</p>}>
             <PlaygroundShell />
           </Suspense>

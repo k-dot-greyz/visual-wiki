@@ -23,9 +23,14 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: "E2E_GARDEN_RESET=1 RESOURCES_PATH=/tmp/vw-e2e-resources.json npm run dev",
     url: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
+    env: {
+      ...process.env,
+      E2E_GARDEN_RESET: "1",
+      RESOURCES_PATH: "/tmp/vw-e2e-resources.json",
+    },
   },
 });
