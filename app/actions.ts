@@ -1,114 +1,16 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { Resource } from "@/lib/types";
-import { isSafeUrl } from "@/lib/safe-url";
-
-const DATA_FILE = path.join(process.cwd(), "resources.json");
-
-// Serialize all mutations so that concurrent async callers — e.g. two pipe POSTs
-// whose DNS lookups resolve in the same event-loop tick — cannot interleave their
-// read-then-write and silently discard each other's data.
-let _modifyChain: Promise<unknown> = Promise.resolve();
-
-function withModifyLock<T>(fn: () => Promise<T>): Promise<T> {
-  const result: Promise<T> = _modifyChain.then(fn);
-  // Swallow the rejection so a failing call never permanently stalls the chain.
-  _modifyChain = result.then(
-    () => {},
-    () => {},
-  );
-  return result;
-}
-
-const initialResources: Resource[] = [
-  {
-    id: "1",
-    title: "React Three Fiber — Official Docs",
-    description:
-      "The single source of truth. Declarative, performant, and beautifully documented.",
-    category: "official",
-    tags: ["core", "react", "docs"],
-    link: "https://docs.pmnd.rs/react-three-fiber",
-    image: "https://picsum.photos/id/1015/800/450",
-    addedAt: "2026-01-12",
-  },
-  {
-    id: "2",
-    title: "Anti-Gravity Racing Demo",
-    description:
-      "Beautiful example of vehicle physics + custom shaders in R3F. Perfect reference for track feel.",
-    category: "example",
-    tags: ["physics", "racing", "shaders"],
-    link: "https://github.com/pmndrs/drei",
-    image: "https://picsum.photos/id/1074/800/450",
-    addedAt: "2026-02-03",
-  },
-  {
-    id: "3",
-    title: "Three.js Journey — Bruno Simon",
-    description:
-      "The best paid course on the planet for mastering Three.js fundamentals.",
-    category: "tutorial",
-    tags: ["course", "beginner", "bruno"],
-    link: "https://threejs-journey.com/",
-    image: "https://picsum.photos/id/106/800/450",
-    addedAt: "2026-01-20",
-  },
-  {
-    id: "4",
-    title: "@react-three/drei",
-    description:
-      "Essential helpers, controls, and abstractions. You will use this every single day.",
-    category: "repo",
-    tags: ["helpers", "controls", "must-have"],
-    link: "https://github.com/pmndrs/drei",
-    image: "https://picsum.photos/id/160/800/450",
-    addedAt: "2026-01-15",
-  },
-  {
-    id: "5",
-    title: "R3F Performance Patterns",
-    description:
-      "Advanced techniques for keeping 60fps even with thousands of objects.",
-    category: "pattern",
-    tags: ["performance", "optimization", "advanced"],
-    link: "https://docs.pmnd.rs/react-three-fiber/advanced/performance",
-    image: "https://picsum.photos/id/201/800/450",
-    addedAt: "2026-02-10",
-  },
-];
+import { getDefaultStore } from "@/lib/resource-store";
 
 export async function getResources(): Promise<Resource[]> {
-  try {
-    if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, JSON.stringify(initialResources, null, 2), "utf-8");
-      return initialResources;
-    }
-    const content = fs.readFileSync(DATA_FILE, "utf-8");
-    return JSON.parse(content) as Resource[];
-  } catch (error) {
-    console.error("Error reading or initializing resources file:", error);
-    return initialResources;
-  }
-}
-
-async function saveResources(resources: Resource[]): Promise<boolean> {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(resources, null, 2), "utf-8");
-    return true;
-  } catch (error) {
-    console.error("Error saving resources file:", error);
-    return false;
-  }
+  return getDefaultStore().list();
 }
 
 export async function addResourceAction(
   prevState: { success: boolean; error?: string } | null,
-  formData: FormData
+  formData: FormData,
 ) {
   const title = formData.get("title")?.toString().trim();
   const description = formData.get("description")?.toString().trim() || "No description yet.";
@@ -116,89 +18,79 @@ export async function addResourceAction(
   const tagsString = formData.get("tags")?.toString().trim() || "";
   const link = formData.get("link")?.toString().trim();
   const image = formData.get("image")?.toString().trim();
-
-  if (!title || !link) {
-    return { success: false, error: "Title and Link are required fields." };
-  }
-
-  if (!isSafeUrl(link)) {
-    return { success: false, error: "Link must be a public http or https URL." };
-  }
-
-  if (image && !isSafeUrl(image)) {
-    return { success: false, error: "Image URL must be a public http or https URL." };
-  }
+  const id = formData.get("id")?.toString().trim();
 
   const tags = tagsString
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
 
-  const newResource: Resource = {
-    id: randomUUID(),
-    title,
+  const result = await getDefaultStore().add({
+    id: id || undefined,
+    title: title || "",
     description,
     category: category || "example",
-    tags: tags.length ? tags : ["new"],
-    link,
-    image: image || `https://picsum.photos/id/${Math.floor(Math.random() * 1000)}/800/450`,
-    addedAt: new Date().toISOString().split("T")[0],
-  };
-
-  return withModifyLock(async () => {
-    const current = await getResources();
-    const updated = [newResource, ...current];
-    const saved = await saveResources(updated);
-
-    if (!saved) {
-      return { success: false, error: "Failed to persist new resource on the server." };
-    }
-
-    revalidatePath("/");
-    return { success: true };
+    tags,
+    link: link || "",
+    image: image || "",
   });
+
+  if (!result.ok) {
+    return { success: false, error: result.error };
+  }
+
+  revalidatePath("/");
+  return { success: true, id: result.resource.id, duplicate: result.duplicate };
+}
+
+export async function updateResourceAction(
+  id: string,
+  patch: Partial<Omit<Resource, "id">>,
+): Promise<{ success: boolean; error?: string }> {
+  const result = await getDefaultStore().update(id, patch);
+  if (!result.ok) return { success: false, error: result.error };
+  revalidatePath("/");
+  return { success: true };
 }
 
 export async function deleteResourceAction(id: string) {
-  return withModifyLock(async () => {
-    const current = await getResources();
-    const updated = current.filter((r) => r.id !== id);
-    const saved = await saveResources(updated);
-
-    if (!saved) {
-      throw new Error("Failed to delete resource on the server.");
-    }
-
-    revalidatePath("/");
-    return { success: true };
-  });
+  const result = await getDefaultStore().remove(id);
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+  revalidatePath("/");
+  return { success: true, resource: result.resource };
 }
 
-export async function addResourceDirect(newRes: Omit<Resource, "id" | "addedAt">): Promise<Resource> {
-  if (!isSafeUrl(newRes.link)) {
-    throw new Error("Resource link must be a public http or https URL.");
-  }
-  if (newRes.image && !isSafeUrl(newRes.image)) {
-    throw new Error("Resource image must be a public http or https URL.");
-  }
-
-  const resource: Resource = {
-    ...newRes,
-    id: randomUUID(),
-    addedAt: new Date().toISOString().split("T")[0],
-  };
-
-  return withModifyLock(async () => {
-    const current = await getResources();
-    const updated = [resource, ...current];
-    const saved = await saveResources(updated);
-
-    if (!saved) {
-      throw new Error("Failed to save resource directly on the server.");
-    }
-
-    revalidatePath("/");
-    return resource;
-  });
+export async function restoreResourceAction(resource: Resource) {
+  const result = await getDefaultStore().add(resource);
+  if (!result.ok) return { success: false, error: result.error };
+  revalidatePath("/");
+  return { success: true, resource: result.resource };
 }
 
+export async function addResourceDirect(newRes: Omit<Resource, "id" | "addedAt"> & { id?: string }): Promise<Resource> {
+  const result = await getDefaultStore().add(newRes);
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+  revalidatePath("/");
+  return result.resource;
+}
+
+export async function importResourcesAction(
+  incoming: Array<Partial<Resource> & { title?: string; link?: string }>,
+) {
+  const result = await getDefaultStore().importAll(incoming);
+  revalidatePath("/");
+  return { success: true, ...result };
+}
+
+export async function resetGardenAction() {
+  if (process.env.E2E_GARDEN_RESET !== "1") {
+    return { success: false, error: "Garden reset is disabled" };
+  }
+  await getDefaultStore().reset();
+  revalidatePath("/");
+  return { success: true };
+}
