@@ -1,0 +1,1402 @@
+[
+  {
+    "id": "000",
+    "name": "The Fool",
+    "sub": "Journey: Land the garden",
+    "type": "void",
+    "stats": {
+      "atk": 0,
+      "def": 90,
+      "spd": 0
+    },
+    "desc": "A blank slate. Land / with landmarks, skip link, h1, and an honest footer count.",
+    "image": "text-indigo-400",
+    "icon": "Sparkles",
+    "rarity": "common",
+    "frame": "standard",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-land",
+        "journey": "system",
+        "wcag": [
+          "2.4.1",
+          "1.3.1",
+          "2.4.6"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "expectVisible",
+              "role": "heading",
+              "name": "visual wiki"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "main#main-content"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "header"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "section[aria-label='Curated knowledge garden']"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "footer"
+            },
+            {
+              "action": "expectVisible",
+              "role": "link",
+              "name": "Skip to main content"
+            },
+            {
+              "action": "expectText",
+              "selector": "footer",
+              "pattern": "resources"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "id": "001",
+    "name": "The Hierophant",
+    "sub": "Journey: Search the garden",
+    "type": "wind",
+    "stats": {
+      "atk": 0,
+      "def": 70,
+      "spd": 4
+    },
+    "desc": "Systemic knowledge. Type Fiber and the URL plus the R3F card must agree.",
+    "image": "text-indigo-200",
+    "icon": "Shield",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-search",
+        "journey": "navigate",
+        "wcag": [
+          "2.4.5",
+          "1.3.1"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "expectVisible",
+              "role": "search"
+            },
+            {
+              "action": "fill",
+              "selector": "#search-input",
+              "value": "Fiber"
+            },
+            {
+              "action": "expectURL",
+              "pattern": "search=Fiber"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('React Three Fiber')"
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "002",
+    "name": "The Lovers",
+    "sub": "Journey: Category filter",
+    "type": "wind",
+    "stats": {
+      "atk": 0,
+      "def": 60,
+      "spd": 8
+    },
+    "desc": "Harmony of opposing forces. Official category and the query string stay in sync.",
+    "image": "text-pink-400",
+    "icon": "Sparkles",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-filter",
+        "journey": "navigate",
+        "wcag": [
+          "3.2.2"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "fill",
+              "selector": "#search-input",
+              "value": "Fiber"
+            },
+            {
+              "action": "selectOption",
+              "selector": "#category-select",
+              "value": "official"
+            },
+            {
+              "action": "expectURL",
+              "pattern": "category=official"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('React Three Fiber')"
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "001"
+    ]
+  },
+  {
+    "id": "003",
+    "name": "The Chariot",
+    "sub": "Journey: Keyboard and skip link",
+    "type": "void",
+    "stats": {
+      "atk": 0,
+      "def": 95,
+      "spd": 12
+    },
+    "desc": "Victory through discipline. Skip to main, tab to Add, no surprise motion.",
+    "image": "text-teal-400",
+    "icon": "Wind",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-keyboard",
+        "journey": "a11y",
+        "wcag": [
+          "2.1.1",
+          "2.4.1",
+          "2.3.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "link",
+              "name": "Skip to main content"
+            },
+            {
+              "action": "expectFocused",
+              "selector": "#main-content"
+            },
+            {
+              "action": "expectVisible",
+              "role": "button",
+              "name": "Add new resource to garden"
+            }
+          ],
+          "reducedMotion": true
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "004",
+    "name": "The Magician",
+    "sub": "Journey: Add a resource",
+    "type": "fire",
+    "stats": {
+      "atk": 55,
+      "def": 80,
+      "spd": 16
+    },
+    "desc": "Will into form. Open Add, autofocus title, plant the deterministic Magician seed.",
+    "image": "text-red-400",
+    "icon": "Flame",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-add",
+        "journey": "mutate",
+        "wcag": [
+          "3.3.2",
+          "2.4.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Add new resource to garden"
+            },
+            {
+              "action": "expectVisible",
+              "role": "heading",
+              "name": "Add new resource"
+            },
+            {
+              "action": "expectFocused",
+              "selector": "#title"
+            },
+            {
+              "action": "fill",
+              "selector": "#title",
+              "value": "Playwright Magician Resource"
+            },
+            {
+              "action": "fill",
+              "selector": "#description",
+              "value": "Deterministic add-dialog seed for the UX journey deck."
+            },
+            {
+              "action": "selectOption",
+              "selector": "#category",
+              "value": "tutorial"
+            },
+            {
+              "action": "fill",
+              "selector": "#tags",
+              "value": "testing, play, automation"
+            },
+            {
+              "action": "fill",
+              "selector": "#link",
+              "value": "https://playwright.dev"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Add to Garden"
+            },
+            {
+              "action": "expectHidden",
+              "role": "heading",
+              "name": "Add new resource"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('Playwright Magician Resource')"
+            }
+          ],
+          "seed": {
+            "id": "e2e-ux-magician",
+            "title": "Playwright Magician Resource",
+            "description": "Deterministic add-dialog seed for the UX journey deck.",
+            "category": "tutorial",
+            "tags": "testing, play, automation",
+            "link": "https://playwright.dev"
+          },
+          "cleanup": {
+            "id": "e2e-ux-magician"
+          }
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "005",
+    "name": "High Priestess",
+    "sub": "Journey: Inspect a card",
+    "type": "water",
+    "stats": {
+      "atk": 10,
+      "def": 85,
+      "spd": 20
+    },
+    "desc": "The mystery behind the veil. Inspect sheet shows title, desc, tags, and link without a stretched overlay stealing buttons.",
+    "image": "text-blue-400",
+    "icon": "Droplets",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-inspect",
+        "journey": "inspect",
+        "wcag": [
+          "2.4.6",
+          "1.3.1"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Inspect Playwright Magician Resource"
+            },
+            {
+              "action": "expectVisible",
+              "role": "dialog",
+              "name": "Inspect resource"
+            },
+            {
+              "action": "expectVisible",
+              "role": "heading",
+              "name": "Playwright Magician Resource"
+            },
+            {
+              "action": "expectText",
+              "pattern": "Deterministic add-dialog seed for the UX journey deck."
+            },
+            {
+              "action": "expectVisible",
+              "role": "link",
+              "name": "Open original resource"
+            }
+          ],
+          "seed": {
+            "id": "e2e-ux-magician",
+            "title": "Playwright Magician Resource",
+            "description": "Deterministic add-dialog seed for the UX journey deck.",
+            "category": "tutorial",
+            "tags": "testing, play, automation",
+            "link": "https://playwright.dev"
+          },
+          "cleanup": {
+            "id": "e2e-ux-magician"
+          }
+        }
+      }
+    },
+    "depends_on": [
+      "004"
+    ]
+  },
+  {
+    "id": "006",
+    "name": "The Empress",
+    "sub": "Journey: Edit a resource",
+    "type": "fire",
+    "stats": {
+      "atk": 60,
+      "def": 80,
+      "spd": 24
+    },
+    "desc": "Digital bloom. Edit description in the sheet, persist, and announce Resource updated.",
+    "image": "text-emerald-400",
+    "icon": "Sparkles",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-edit",
+        "journey": "mutate",
+        "wcag": [
+          "3.3.4",
+          "4.1.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Inspect Playwright Magician Resource"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Edit resource"
+            },
+            {
+              "action": "fill",
+              "selector": "#inspect-description",
+              "value": "Updated Magician description."
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Save changes"
+            },
+            {
+              "action": "expectText",
+              "selector": "[data-testid='wiki-live-region']",
+              "pattern": "Resource updated"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('Updated Magician description.')"
+            }
+          ],
+          "seed": {
+            "id": "e2e-ux-magician",
+            "title": "Playwright Magician Resource",
+            "description": "Deterministic add-dialog seed for the UX journey deck.",
+            "category": "tutorial",
+            "tags": "testing, play, automation",
+            "link": "https://playwright.dev"
+          },
+          "cleanup": {
+            "id": "e2e-ux-magician"
+          }
+        }
+      }
+    },
+    "depends_on": [
+      "005"
+    ]
+  },
+  {
+    "id": "007",
+    "name": "The Emperor",
+    "sub": "Journey: Export for AI",
+    "type": "electric",
+    "stats": {
+      "atk": 20,
+      "def": 50,
+      "spd": 28
+    },
+    "desc": "Foundation of empires. Export JSON includes id; clipboard denial shows a selectable fallback.",
+    "image": "text-yellow-400",
+    "icon": "Zap",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-export",
+        "journey": "ingest",
+        "wcag": [
+          "1.1.1"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Export all resources to JSON and copy AI agent prompt to clipboard"
+            },
+            {
+              "action": "expectDownload",
+              "pattern": "visual-wiki-"
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "008",
+    "name": "Strength",
+    "sub": "Journey: Pipe ingest",
+    "type": "electric",
+    "stats": {
+      "atk": 50,
+      "def": 70,
+      "spd": 32
+    },
+    "desc": "Compassionate control. Pipe a mocked public URL; aria-busy while the garden drinks.",
+    "image": "text-orange-400",
+    "icon": "Shield",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-pipe",
+        "journey": "ingest",
+        "wcag": [
+          "4.1.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "route",
+              "url": "**/api/pipe",
+              "method": "POST",
+              "status": 200,
+              "body": {
+                "success": true,
+                "method": "web-scraper",
+                "resource": {
+                  "id": "e2e-ux-pipe",
+                  "title": "Piped Example",
+                  "description": "Mock pipe",
+                  "category": "example",
+                  "tags": [
+                    "pipe"
+                  ],
+                  "link": "https://example.com",
+                  "image": "https://picsum.photos/id/10/800/450",
+                  "addedAt": "2026-08-21"
+                }
+              }
+            },
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "fill",
+              "selector": "#pipe-url-input",
+              "value": "https://example.com"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Pipe It In!"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('Piped Example')"
+            }
+          ],
+          "cleanup": {
+            "id": "e2e-ux-pipe"
+          }
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "009",
+    "name": "Justice",
+    "sub": "Journey: Pipe handshake",
+    "type": "electric",
+    "stats": {
+      "atk": 0,
+      "def": 40,
+      "spd": 36
+    },
+    "desc": "Cause and effect in perfect sync. GET /api/pipe returns status, fingerprint, and schema keys.",
+    "image": "text-blue-200",
+    "icon": "Shield",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-handshake",
+        "journey": "ingest",
+        "wcag": [],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "fetchJSON",
+              "url": "/api/pipe",
+              "keys": [
+                "status",
+                "fingerprint",
+                "schema",
+                "total",
+                "resources"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "010",
+    "name": "Wheel of Fortune",
+    "sub": "Journey: Random inspect",
+    "type": "wind",
+    "stats": {
+      "atk": 15,
+      "def": 40,
+      "spd": 40
+    },
+    "desc": "The inevitable spin. Random announces the destination in a live region and opens inspect, not a stray tab.",
+    "image": "text-amber-400",
+    "icon": "RotateCcw",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-random",
+        "journey": "navigate",
+        "wcag": [
+          "4.1.3",
+          "3.2.5"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Inspect a random garden resource"
+            },
+            {
+              "action": "expectVisible",
+              "role": "dialog",
+              "name": "Inspect resource"
+            },
+            {
+              "action": "expectText",
+              "selector": "[data-testid='wiki-live-region']",
+              "pattern": "Inspecting"
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "011",
+    "name": "The Star",
+    "sub": "Journey: Copy for AI",
+    "type": "water",
+    "stats": {
+      "atk": 5,
+      "def": 55,
+      "spd": 44
+    },
+    "desc": "Renewal. Copy a structured block; clipboard denial reveals a selectable fallback.",
+    "image": "text-yellow-200",
+    "icon": "Star",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-copy",
+        "journey": "inspect",
+        "wcag": [
+          "1.1.1"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Copy structured AI prompt block for React Three Fiber — Official Docs"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "[data-testid='wiki-copy-status']"
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "012",
+    "name": "The Hanged Man",
+    "sub": "Journey: Playground hydrate",
+    "type": "water",
+    "stats": {
+      "atk": 0,
+      "def": 75,
+      "spd": 48
+    },
+    "desc": "A different vantage. Hydrate a public repo into tree plus a sandboxed iframe.",
+    "image": "text-cyan-400",
+    "icon": "Eye",
+    "metadata": {
+      "wiki": {
+        "route": "/play",
+        "testidPrefix": "wiki-play",
+        "journey": "inspect",
+        "wcag": [
+          "1.3.1"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "route",
+              "url": "**/api/play**",
+              "method": "GET",
+              "status": 200,
+              "body": {
+                "ok": true,
+                "card": {
+                  "kind": "playable",
+                  "repo": "https://github.com/nari-labs/dia",
+                  "runtime": "iframe",
+                  "entry": "https://example.com/dia",
+                  "display": "tree"
+                },
+                "title": "nari-labs/dia",
+                "description": "Dialogue TTS",
+                "language": "Python",
+                "tree": [
+                  {
+                    "path": "README.md",
+                    "type": "blob"
+                  },
+                  {
+                    "path": "src/model.py",
+                    "type": "blob"
+                  }
+                ],
+                "truncated": false
+              }
+            },
+            {
+              "action": "goto",
+              "url": "/play?repo=nari-labs/dia"
+            },
+            {
+              "action": "expectVisible",
+              "role": "heading",
+              "name": "playground"
+            },
+            {
+              "action": "expectVisible",
+              "role": "heading",
+              "name": "nari-labs/dia"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "li:has-text('README.md')"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "iframe[title='Sandboxed live preview']"
+            },
+            {
+              "action": "expectAttribute",
+              "selector": "iframe[title='Sandboxed live preview']",
+              "attribute": "sandbox",
+              "contains": "allow-scripts",
+              "notContains": "allow-same-origin"
+            },
+            {
+              "action": "expectAttribute",
+              "selector": "iframe[title='Sandboxed live preview']",
+              "attribute": "referrerpolicy",
+              "contains": "no-referrer"
+            }
+          ],
+          "reducedMotion": true
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "013",
+    "name": "The Moon",
+    "sub": "Journey: Plant playground in garden",
+    "type": "fire",
+    "stats": {
+      "atk": 45,
+      "def": 70,
+      "spd": 52
+    },
+    "desc": "Navigate the shadows. Plant writes a kind:playable resource into the garden store.",
+    "image": "text-blue-100",
+    "icon": "Eye",
+    "metadata": {
+      "wiki": {
+        "route": "/play",
+        "testidPrefix": "wiki-plant",
+        "journey": "mutate",
+        "wcag": [
+          "4.1.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "route",
+              "url": "**/api/play**",
+              "method": "GET",
+              "status": 200,
+              "body": {
+                "ok": true,
+                "card": {
+                  "kind": "playable",
+                  "repo": "https://github.com/nari-labs/dia",
+                  "runtime": "iframe",
+                  "entry": "https://example.com/dia",
+                  "display": "tree"
+                },
+                "title": "nari-labs/dia",
+                "description": "Dialogue TTS",
+                "language": "Python",
+                "tree": [
+                  {
+                    "path": "README.md",
+                    "type": "blob"
+                  },
+                  {
+                    "path": "src/model.py",
+                    "type": "blob"
+                  }
+                ],
+                "truncated": false
+              }
+            },
+            {
+              "action": "route",
+              "url": "**/api/pipe",
+              "method": "POST",
+              "status": 200,
+              "body": {
+                "success": true,
+                "method": "raw",
+                "resource": {
+                  "id": "e2e-ux-plant",
+                  "title": "nari-labs/dia",
+                  "description": "Dialogue TTS",
+                  "category": "repo",
+                  "tags": [
+                    "playable"
+                  ],
+                  "link": "https://github.com/nari-labs/dia",
+                  "image": "https://picsum.photos/id/160/800/450",
+                  "addedAt": "2026-08-21",
+                  "kind": "playable",
+                  "runtime": "iframe",
+                  "entry": "https://example.com/dia",
+                  "display": "tree"
+                }
+              }
+            },
+            {
+              "action": "goto",
+              "url": "/play?repo=nari-labs/dia"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Plant in garden"
+            },
+            {
+              "action": "expectText",
+              "selector": "[data-testid='wiki-live-region']",
+              "pattern": "Planted"
+            }
+          ],
+          "cleanup": {
+            "id": "e2e-ux-plant"
+          }
+        }
+      }
+    },
+    "depends_on": [
+      "012"
+    ]
+  },
+  {
+    "id": "014",
+    "name": "The Hermit",
+    "sub": "Journey: Reduced motion",
+    "type": "void",
+    "stats": {
+      "atk": 0,
+      "def": 99,
+      "spd": 56
+    },
+    "desc": "Solitude is the forge. prefers-reduced-motion: reduce never mounts ogl chrome.",
+    "image": "text-purple-400",
+    "icon": "Eye",
+    "metadata": {
+      "wiki": {
+        "route": "/play",
+        "testidPrefix": "wiki-motion",
+        "journey": "a11y",
+        "wcag": [
+          "2.3.3",
+          "2.2.2"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "route",
+              "url": "**/api/play**",
+              "method": "GET",
+              "status": 200,
+              "body": {
+                "ok": true,
+                "card": {
+                  "kind": "playable",
+                  "repo": "https://github.com/nari-labs/dia",
+                  "runtime": "iframe",
+                  "entry": "https://example.com/dia",
+                  "display": "tree"
+                },
+                "title": "nari-labs/dia",
+                "description": "Dialogue TTS",
+                "language": "Python",
+                "tree": [
+                  {
+                    "path": "README.md",
+                    "type": "blob"
+                  },
+                  {
+                    "path": "src/model.py",
+                    "type": "blob"
+                  }
+                ],
+                "truncated": false
+              }
+            },
+            {
+              "action": "goto",
+              "url": "/play?repo=nari-labs/dia"
+            },
+            {
+              "action": "expectCount",
+              "selector": "[data-ogl='on']",
+              "count": 0
+            }
+          ],
+          "reducedMotion": true
+        }
+      }
+    },
+    "depends_on": [
+      "012"
+    ]
+  },
+  {
+    "id": "015",
+    "name": "Temperance",
+    "sub": "Journey: Extra motion toggle",
+    "type": "void",
+    "stats": {
+      "atk": 0,
+      "def": 80,
+      "spd": 60
+    },
+    "desc": "Alchemy of three states. Cycle auto, on, off with aria-valuetext naming each.",
+    "image": "text-lime-300",
+    "icon": "Sparkles",
+    "metadata": {
+      "wiki": {
+        "route": "/play",
+        "testidPrefix": "wiki-flex",
+        "journey": "a11y",
+        "wcag": [
+          "4.1.2"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/play"
+            },
+            {
+              "action": "expectAttribute",
+              "selector": "[data-testid='wiki-flex-toggle']",
+              "attribute": "aria-valuetext",
+              "contains": "auto"
+            },
+            {
+              "action": "click",
+              "testid": "wiki-flex-toggle"
+            },
+            {
+              "action": "expectAttribute",
+              "selector": "[data-testid='wiki-flex-toggle']",
+              "attribute": "aria-valuetext",
+              "contains": "on"
+            },
+            {
+              "action": "click",
+              "testid": "wiki-flex-toggle"
+            },
+            {
+              "action": "expectAttribute",
+              "selector": "[data-testid='wiki-flex-toggle']",
+              "attribute": "aria-valuetext",
+              "contains": "off"
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "016",
+    "name": "The Tower",
+    "sub": "Journey: Private repo fail-closed",
+    "type": "dark",
+    "stats": {
+      "atk": 0,
+      "def": 90,
+      "spd": 64
+    },
+    "desc": "Lightning. A private hydrate stays an alert, never an iframe.",
+    "image": "text-red-700",
+    "icon": "Zap",
+    "metadata": {
+      "wiki": {
+        "route": "/play",
+        "testidPrefix": "wiki-private",
+        "journey": "fail-closed",
+        "wcag": [
+          "4.1.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "route",
+              "url": "**/api/play**",
+              "method": "GET",
+              "status": 404,
+              "body": {
+                "ok": false,
+                "error": "Private repositories are not allowed"
+              }
+            },
+            {
+              "action": "goto",
+              "url": "/play?repo=k-dot-greyz/secret"
+            },
+            {
+              "action": "expectText",
+              "selector": "[role='alert']",
+              "pattern": "private"
+            },
+            {
+              "action": "expectCount",
+              "selector": "iframe",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "017",
+    "name": "The Devil",
+    "sub": "Journey: SSRF pipe rejection",
+    "type": "dark",
+    "stats": {
+      "atk": 0,
+      "def": 95,
+      "spd": 68
+    },
+    "desc": "Bondage to the private net is refused. Loopback pipe writes no card.",
+    "image": "text-rose-800",
+    "icon": "Skull",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-ssrf",
+        "journey": "fail-closed",
+        "wcag": [
+          "4.1.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "fill",
+              "selector": "#pipe-url-input",
+              "value": "https://127.0.0.1/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Pipe It In!"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "[role='alert']"
+            },
+            {
+              "action": "expectCount",
+              "selector": "article:has-text('127.0.0.1')",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "018",
+    "name": "Death",
+    "sub": "Journey: Delete with undo",
+    "type": "dark",
+    "stats": {
+      "atk": 100,
+      "def": 85,
+      "spd": 72
+    },
+    "desc": "Clear the old. In-app confirm, never window.confirm; undo restores the Magician.",
+    "image": "text-gray-400",
+    "icon": "Skull",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-delete",
+        "journey": "mutate",
+        "wcag": [
+          "3.3.4",
+          "4.1.3"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Delete resource: Playwright Magician Resource"
+            },
+            {
+              "action": "expectVisible",
+              "role": "dialog",
+              "name": "Delete resource?"
+            },
+            {
+              "action": "click",
+              "role": "button",
+              "name": "Delete"
+            },
+            {
+              "action": "expectHidden",
+              "selector": "article:has-text('Playwright Magician Resource')"
+            },
+            {
+              "action": "click",
+              "testid": "wiki-undo-delete"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('Playwright Magician Resource')"
+            }
+          ],
+          "seed": {
+            "id": "e2e-ux-magician",
+            "title": "Playwright Magician Resource",
+            "description": "Deterministic add-dialog seed for the UX journey deck.",
+            "category": "tutorial",
+            "tags": "testing, play, automation",
+            "link": "https://playwright.dev"
+          },
+          "cleanup": {
+            "id": "e2e-ux-magician"
+          }
+        }
+      }
+    },
+    "depends_on": [
+      "004"
+    ]
+  },
+  {
+    "id": "019",
+    "name": "The Sun",
+    "sub": "Journey: Empty and error live regions",
+    "type": "void",
+    "stats": {
+      "atk": 0,
+      "def": 70,
+      "spd": 76
+    },
+    "desc": "Absolute clarity. Empty search announces; pipe failures use role=alert.",
+    "image": "text-yellow-500",
+    "icon": "Sparkles",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-status",
+        "journey": "a11y",
+        "wcag": [
+          "4.1.3",
+          "3.3.1"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "fill",
+              "selector": "#search-input",
+              "value": "zzz-no-such-resource"
+            },
+            {
+              "action": "expectText",
+              "selector": "[data-testid='wiki-garden-empty']",
+              "pattern": "No resources found"
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  },
+  {
+    "id": "020",
+    "name": "Judgement",
+    "sub": "Journey: Import JSON hydrate",
+    "type": "electric",
+    "stats": {
+      "atk": 40,
+      "def": 60,
+      "spd": 80
+    },
+    "desc": "The call. Import previously exported JSON; duplicates resolve by normalized link.",
+    "image": "text-violet-300",
+    "icon": "RotateCcw",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-import",
+        "journey": "ingest",
+        "wcag": [
+          "3.3.4"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "importJSON",
+              "body": {
+                "exportedAt": "2026-08-21T00:00:00.000Z",
+                "total": 1,
+                "resources": [
+                  {
+                    "id": "e2e-ux-import",
+                    "title": "Imported Judgement Card",
+                    "description": "Hydrated from export JSON.",
+                    "category": "pattern",
+                    "tags": [
+                      "import"
+                    ],
+                    "link": "https://example.org/judgement"
+                  }
+                ]
+              }
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('Imported Judgement Card')"
+            }
+          ],
+          "cleanup": {
+            "id": "e2e-ux-import"
+          }
+        }
+      }
+    },
+    "depends_on": [
+      "007"
+    ]
+  },
+  {
+    "id": "021",
+    "name": "The World",
+    "sub": "Journey: Playable UX deck",
+    "type": "void",
+    "stats": {
+      "atk": 0,
+      "def": 100,
+      "spd": 84
+    },
+    "desc": "Completion. This deck is tarot-valid and listed in the garden as a playable resource.",
+    "image": "text-indigo-300",
+    "icon": "Sparkles",
+    "rarity": "ultra-rare",
+    "frame": "goldFoil",
+    "metadata": {
+      "wiki": {
+        "route": "/",
+        "testidPrefix": "wiki-world",
+        "journey": "system",
+        "wcag": [
+          "1.3.1"
+        ],
+        "playwright": {
+          "steps": [
+            {
+              "action": "goto",
+              "url": "/"
+            },
+            {
+              "action": "expectVisible",
+              "selector": "article:has-text('UX Journey Deck')"
+            },
+            {
+              "action": "fetchJSON",
+              "url": "/api/deck/ux-journey",
+              "expectLength": 22,
+              "keys": []
+            }
+          ]
+        }
+      }
+    },
+    "depends_on": [
+      "000"
+    ]
+  }
+]
