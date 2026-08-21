@@ -1110,7 +1110,7 @@
             },
             {
               "action": "expectText",
-              "selector": "[role='alert']",
+              "selector": "p[role='alert']",
               "pattern": "private"
             },
             {
@@ -1165,7 +1165,7 @@
             },
             {
               "action": "expectVisible",
-              "selector": "[role='alert']"
+              "selector": "p[role='alert']"
             },
             {
               "action": "expectCount",

@@ -10,7 +10,7 @@ For a feature overview and quick start, see [README.md](./README.md).
 
 ## 📦 Repository overview
 
-**Visual Wiki** is a Next.js knowledge-garden UI: curate resource cards, persist them in the browser, and export JSON for AI agents.
+**Visual Wiki** is a Next.js knowledge-garden UI: curate resource cards, persist them in a server JSON file (`resources.json`, overridable via `RESOURCES_PATH`), and export JSON for AI agents. Extra-motion preference is the only `localStorage` key (`gw-flex`).
 
 | Area | Technology |
 |------|------------|
@@ -18,16 +18,17 @@ For a feature overview and quick start, see [README.md](./README.md).
 | UI | [React 19](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/) (`@import "tailwindcss"` in `app/globals.css`, PostCSS via `@tailwindcss/postcss`) |
 | Components | Radix Dialog, Framer Motion, Lucide icons, Sonner toasts |
 | Types | TypeScript (`lib/types.ts` — `Resource` interface) |
-| E2E tests | [Playwright](https://playwright.dev/) (`e2e/smoke.spec.ts`, config in `playwright.config.ts`) |
+| E2E tests | [Playwright](https://playwright.dev/) (`e2e/ux-deck.spec.ts` driven by `decks/ux-journey.json`, plus `e2e/smoke.spec.ts` / `e2e/play.spec.ts`) |
 
 ### Layout
 
-```
+```text
 app/                 # App Router routes (layout, page, globals.css)
-components/          # ResourceCard, AddResourceDialog, etc.
-lib/                 # Shared types and helpers
+components/          # ResourceCard, inspect/edit sheet, dialogs
+lib/                 # Types, ResourceStore, Aether schema, pipe ingest
+decks/               # Aether-compatible UX journey JSON (tarot + Playwright)
 e2e/                 # Playwright specs, screenshots, HTML report output
-resources.json       # Optional seed/export payload (not required at runtime)
+resources.json       # Server-side garden persistence (gitignored; created at runtime)
 ```
 
 **Local dev:** `npm install` → `npm run dev` → [http://localhost:3000](http://localhost:3000). Default port comes from Next.js; override with `PORT` if needed.

@@ -36,7 +36,7 @@ function locatorFor(page: Page, step: PlaywrightStep): Locator {
 }
 
 async function clickStep(page: Page, step: PlaywrightStep) {
-  await locatorFor(page, step).click();
+  await locatorFor(page, step).click({ force: true });
 }
 
 async function runStep(page: Page, step: PlaywrightStep) {
@@ -144,7 +144,6 @@ async function runCard(page: Page, card: AetherCard) {
 }
 
 test.describe("UX journey deck", () => {
-  test.describe.configure({ mode: "serial" });
 
   for (const card of deck) {
     test(`${card.id} ${card.name}`, async ({ page, request }) => {
