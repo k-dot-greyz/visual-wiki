@@ -57,7 +57,7 @@ export default function InspectEditSheet() {
         <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur z-50" />
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6">
           <Dialog.Content
-            aria-describedby="inspect-description"
+            aria-describedby="inspect-sheet-description"
             className="bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
           >
             <div className="flex items-center justify-between px-8 py-6 border-b border-zinc-800">
@@ -74,7 +74,7 @@ export default function InspectEditSheet() {
                 </button>
               </Dialog.Close>
             </div>
-            <Dialog.Description id="inspect-description" className="sr-only">
+            <Dialog.Description id="inspect-sheet-description" className="sr-only">
               Resource details, original link, and edit controls.
             </Dialog.Description>
             {resource && (

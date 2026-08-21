@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import WikiLiveRegion from "@/components/WikiLiveRegion";
 import WikiUndoBar from "@/components/WikiUndoBar";
 import SkipLink from "@/components/SkipLink";
+import InspectEditSheet from "@/components/InspectEditSheet";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const grotesk = Space_Grotesk({
