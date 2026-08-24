@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
@@ -7,6 +8,21 @@ import { Resource } from "@/lib/types";
 import { isSafeUrl } from "@/lib/safe-url";
 
 const DATA_FILE = path.join(process.cwd(), "resources.json");
+
+// Serialize all mutations so that concurrent async callers — e.g. two pipe POSTs
+// whose DNS lookups resolve in the same event-loop tick — cannot interleave their
+// read-then-write and silently discard each other's data.
+let _modifyChain: Promise<unknown> = Promise.resolve();
+
+function withModifyLock<T>(fn: () => Promise<T>): Promise<T> {
+  const result: Promise<T> = _modifyChain.then(fn);
+  // Swallow the rejection so a failing call never permanently stalls the chain.
+  _modifyChain = result.then(
+    () => {},
+    () => {},
+  );
+  return result;
+}
 
 const initialResources: Resource[] = [
   {
@@ -119,7 +135,7 @@ export async function addResourceAction(
     .filter(Boolean);
 
   const newResource: Resource = {
-    id: Date.now().toString(36),
+    id: randomUUID(),
     title,
     description,
     category: category || "example",
@@ -129,29 +145,33 @@ export async function addResourceAction(
     addedAt: new Date().toISOString().split("T")[0],
   };
 
-  const current = await getResources();
-  const updated = [newResource, ...current];
-  const saved = await saveResources(updated);
+  return withModifyLock(async () => {
+    const current = await getResources();
+    const updated = [newResource, ...current];
+    const saved = await saveResources(updated);
 
-  if (!saved) {
-    return { success: false, error: "Failed to persist new resource on the server." };
-  }
+    if (!saved) {
+      return { success: false, error: "Failed to persist new resource on the server." };
+    }
 
-  revalidatePath("/");
-  return { success: true };
+    revalidatePath("/");
+    return { success: true };
+  });
 }
 
 export async function deleteResourceAction(id: string) {
-  const current = await getResources();
-  const updated = current.filter((r) => r.id !== id);
-  const saved = await saveResources(updated);
+  return withModifyLock(async () => {
+    const current = await getResources();
+    const updated = current.filter((r) => r.id !== id);
+    const saved = await saveResources(updated);
 
-  if (!saved) {
-    throw new Error("Failed to delete resource on the server.");
-  }
+    if (!saved) {
+      throw new Error("Failed to delete resource on the server.");
+    }
 
-  revalidatePath("/");
-  return { success: true };
+    revalidatePath("/");
+    return { success: true };
+  });
 }
 
 export async function addResourceDirect(newRes: Omit<Resource, "id" | "addedAt">): Promise<Resource> {
@@ -164,19 +184,21 @@ export async function addResourceDirect(newRes: Omit<Resource, "id" | "addedAt">
 
   const resource: Resource = {
     ...newRes,
-    id: Date.now().toString(36),
+    id: randomUUID(),
     addedAt: new Date().toISOString().split("T")[0],
   };
 
-  const current = await getResources();
-  const updated = [resource, ...current];
-  const saved = await saveResources(updated);
+  return withModifyLock(async () => {
+    const current = await getResources();
+    const updated = [resource, ...current];
+    const saved = await saveResources(updated);
 
-  if (!saved) {
-    throw new Error("Failed to save resource directly on the server.");
-  }
+    if (!saved) {
+      throw new Error("Failed to save resource directly on the server.");
+    }
 
-  revalidatePath("/");
-  return resource;
+    revalidatePath("/");
+    return resource;
+  });
 }
 
