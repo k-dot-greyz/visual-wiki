@@ -56,6 +56,7 @@ test.describe("Playground", () => {
     await expect(live).toHaveAttribute("target", "_blank");
 
     await expect(page.locator("[data-ogl='on']")).toHaveCount(0);
+    await page.screenshot({ path: "e2e/screenshots/play-html5-redirect-no-iframe.png", fullPage: true });
   });
 
   test("plays media files in a native HTML5 player instead of an iframe", async ({ page }) => {
