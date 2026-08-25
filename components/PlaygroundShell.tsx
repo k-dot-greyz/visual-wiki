@@ -18,7 +18,12 @@ export default function PlaygroundShell() {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (!initial) return;
+    if (!initial) {
+      setPending(false);
+      setError(null);
+      setResult(null);
+      return;
+    }
     const controller = new AbortController();
     void load(initial, controller.signal);
     return () => controller.abort();

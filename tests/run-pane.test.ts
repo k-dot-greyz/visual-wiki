@@ -1,19 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { iframeSandbox, runtimeStubCopy } from "@/lib/run-pane";
+import { normalizeRuntime, surfaceFor } from "@/lib/entry-runtime";
 
 describe("iframeSandbox", () => {
-  it("uses a restricted sandbox without allow-same-origin", () => {
-    const attrs = iframeSandbox();
-    expect(attrs.sandbox.split(" ")).toEqual(
-      expect.arrayContaining(["allow-scripts", "allow-forms", "allow-popups"]),
-    );
-    expect(attrs.sandbox).not.toMatch(/allow-same-origin/);
-    expect(attrs.referrerPolicy).toBe("no-referrer");
-  });
-
-  it("does not allow popups to escape sandbox (tab-napping prevention)", () => {
-    const attrs = iframeSandbox();
-    expect(attrs.sandbox).not.toMatch(/allow-popups-to-escape-sandbox/);
+  it("throws so no caller can mount a sandboxed preview", () => {
+    expect(() => iframeSandbox()).toThrow(/iframe previews are disabled/i);
   });
 });
 
@@ -22,5 +13,35 @@ describe("runtimeStubCopy", () => {
     expect(runtimeStubCopy("webcontainer")).toMatch(/Node in-tab/i);
     expect(runtimeStubCopy("vm")).toMatch(/hosted venv/i);
     expect(runtimeStubCopy("none")).toMatch(/Open on GitHub/i);
+    expect(runtimeStubCopy("redirect")).toMatch(/new tab/i);
+    expect(runtimeStubCopy("html5")).toMatch(/HTML5/i);
+  });
+});
+
+describe("surfaceFor", () => {
+  it("never returns an iframe surface for a homepage", () => {
+    const surface = surfaceFor({
+      runtime: "iframe",
+      entry: "https://example.com/dia",
+    });
+    expect(surface.kind).toBe("redirect");
+    expect(JSON.stringify(surface)).not.toMatch(/iframe/i);
+  });
+
+  it("uses native audio for media file entries", () => {
+    expect(surfaceFor({ runtime: "html5", entry: "https://example.com/track.mp3" }).kind).toBe(
+      "audio",
+    );
+    expect(surfaceFor({ runtime: "redirect", entry: "https://example.com/clip.webm" }).kind).toBe(
+      "video",
+    );
+  });
+});
+
+describe("normalizeRuntime", () => {
+  it("maps legacy iframe to redirect or html5, never iframe", () => {
+    expect(normalizeRuntime("iframe", "https://example.com")).toBe("redirect");
+    expect(normalizeRuntime("iframe", "https://example.com/a.mp4")).toBe("html5");
+    expect(normalizeRuntime("iframe", undefined)).toBe("none");
   });
 });

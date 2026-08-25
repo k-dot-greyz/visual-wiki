@@ -44,7 +44,8 @@ export default function ResourceCard({ resource }: ResourceCardProps) {
       <div className="relative h-52 overflow-hidden bg-zinc-950">
         <img
           src={resource.image}
-          alt="" // Decorative image, main content is described in the title/desc
+          alt=""
+          referrerPolicy="no-referrer"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 motion-reduce:transform-none motion-reduce:transition-none"
           loading="lazy"
         />

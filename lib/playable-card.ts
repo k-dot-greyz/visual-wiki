@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isSafeUrl } from "./safe-url";
+import { normalizeRuntime } from "./entry-runtime";
 
 const githubRepoUrl = z
   .string()
@@ -15,12 +16,19 @@ const safeHttpsEntry = z
   .refine((u) => /^https:\/\//i.test(u), { message: "entry must be https" })
   .refine((u) => isSafeUrl(u), { message: "entry URL failed SSRF guard" });
 
-export const playableCardSchema = z.object({
-  kind: z.literal("playable"),
-  repo: githubRepoUrl,
-  runtime: z.enum(["none", "iframe", "webcontainer", "vm"]).default("none"),
-  entry: safeHttpsEntry.optional(),
-  display: z.enum(["tree", "ogl"]).default("tree"),
-});
+const runtimeIn = z.enum(["none", "iframe", "html5", "redirect", "webcontainer", "vm"]).default("none");
+
+export const playableCardSchema = z
+  .object({
+    kind: z.literal("playable"),
+    repo: githubRepoUrl,
+    runtime: runtimeIn,
+    entry: safeHttpsEntry.optional(),
+    display: z.enum(["tree", "ogl"]).default("tree"),
+  })
+  .transform((card) => ({
+    ...card,
+    runtime: normalizeRuntime(card.runtime, card.entry),
+  }));
 
 export type PlayableCard = z.infer<typeof playableCardSchema>;

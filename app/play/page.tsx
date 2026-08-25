@@ -4,7 +4,7 @@ import PlaygroundShell from "@/components/PlaygroundShell";
 
 export const metadata = {
   title: "playground • visual wiki",
-  description: "Hydrate a public GitHub repo into a playable card — tree display, sandboxed iframe, stub runtimes.",
+  description: "Hydrate a public GitHub repo into a playable card — tree display, HTML5 media or outbound redirect. No iframes.",
 };
 
 export default function PlayPage() {
@@ -21,7 +21,7 @@ export default function PlayPage() {
           <h1 className="font-semibold text-5xl tracking-tighter">playground</h1>
           <p className="text-zinc-400 max-w-xl">
             Paste a public GitHub URL. We hydrate metadata and a truncated file tree.
-            Live sites iframe here. Node in-tab and hosted venv are the next pipes.
+            Media files play in a native HTML5 player. Live sites open in a new tab — never an iframe.
           </p>
         </header>
         <main>

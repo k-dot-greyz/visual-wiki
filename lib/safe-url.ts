@@ -31,15 +31,26 @@ function isPrivateIpv4(ip: string): boolean {
   if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
   if (parts[0] === 192 && parts[1] === 168) return true;
   if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true;
+  // RFC 2544 benchmarking — CodeRabbit merge-blocker on visual-wiki#6
+  if (parts[0] === 198 && parts[1] >= 18 && parts[1] <= 19) return true;
+  // TEST-NET documentation ranges
+  if (parts[0] === 192 && parts[1] === 0 && parts[2] === 2) return true;
+  if (parts[0] === 198 && parts[1] === 51 && parts[2] === 100) return true;
+  if (parts[0] === 203 && parts[1] === 0 && parts[2] === 113) return true;
+  // multicast + reserved + broadcast
+  if (parts[0] >= 224) return true;
   return false;
 }
 
 function isPrivateIpv6(ip: string): boolean {
   const lower = ip.toLowerCase();
   if (lower === "::1" || lower === "0:0:0:0:0:0:0:1") return true;
+  if (lower === "::" || lower === "0:0:0:0:0:0:0:0") return true;
   // fe80::/10 — fe80 through febf, not just the fe80: prefix
   if (/^fe[89ab][0-9a-f]:/i.test(lower)) return true;
   if (/^f[cd][0-9a-f]/i.test(lower)) return true;
+  if (lower.startsWith("2001:db8:")) return true;
+  if (/^ff[0-9a-f]{2}:/i.test(lower)) return true;
   const mapped = parseIpv4Mapped(lower);
   if (mapped) return isPrivateIpv4(mapped);
   return false;
@@ -118,6 +129,7 @@ export async function safeFetch(
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       if (!location) return response;
+      await response.body?.cancel().catch(() => {});
       current = new URL(location, current).href;
       continue;
     }

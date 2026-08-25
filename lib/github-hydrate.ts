@@ -1,5 +1,6 @@
 import { isSafeUrl } from "./safe-url";
 import { playableCardSchema, type PlayableCard } from "./playable-card";
+import { runtimeForEntry } from "./entry-runtime";
 
 export type TreeNode = { path: string; type: "blob" | "tree" };
 
@@ -50,12 +51,15 @@ export async function hydrateGithub(
   const fetchImpl = opts.fetch ?? fetch;
 
   try {
-    const metaRes = await fetchImpl(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, {
-      headers: {
-        "User-Agent": "visual-wiki-playground",
-        Accept: "application/vnd.github.v3+json",
+    const metaRes = await fetchImpl(
+      `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`,
+      {
+        headers: {
+          "User-Agent": "visual-wiki-playground",
+          Accept: "application/vnd.github.v3+json",
+        },
       },
-    });
+    );
 
     if (!metaRes.ok) {
       return { ok: false, error: `GitHub responded ${metaRes.status}` };
@@ -83,7 +87,7 @@ export async function hydrateGithub(
     const cardParsed = playableCardSchema.safeParse({
       kind: "playable",
       repo: htmlUrl,
-      runtime: homepage ? "iframe" : "none",
+      runtime: runtimeForEntry(homepage),
       entry: homepage,
       display: "tree",
     });
@@ -93,8 +97,11 @@ export async function hydrateGithub(
     }
 
     const branch = meta.default_branch || "main";
+    const ownerSeg = encodeURIComponent(parsed.owner);
+    const repoSeg = encodeURIComponent(parsed.repo);
+    const branchSeg = encodeURIComponent(branch);
     const treeRes = await fetchImpl(
-      `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/${branch}?recursive=1`,
+      `https://api.github.com/repos/${ownerSeg}/${repoSeg}/git/trees/${branchSeg}?recursive=1`,
       {
         headers: {
           "User-Agent": "visual-wiki-playground",

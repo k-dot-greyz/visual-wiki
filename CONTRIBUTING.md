@@ -67,7 +67,7 @@ Every feature, integration, or refactoring in `visual-wiki` must be designed as 
 ### 2.3. Open Piping (Strict Inter-Process Communication)
 
 * **Rule**: Communicate via strictly typed, isolated message events rather than direct state mutation.
-* **Application**: Interaction between visual modules, integrations, or parent window contexts must utilize web-standard communication protocols—such as custom DOM events (e.g., `visual-wiki:resource-added`), standard JSON-RPC over `postMessage` (for iframe environments), or strictly validated REST endpoints—instead of global variable leaking.
+* **Application**: Interaction between visual modules, integrations, or parent window contexts must utilize web-standard communication protocols—such as custom DOM events (e.g., `visual-wiki:resource-added`) or strictly validated REST endpoints—instead of global variable leaking. **Do not iframe third-party pages.** Media uses native HTML5 `<audio>` / `<video>`. Live sites are user-activated `rel="noopener noreferrer"` redirects.
 
 ### 2.4. Boundary Validation (The "Hostile Edge")
 

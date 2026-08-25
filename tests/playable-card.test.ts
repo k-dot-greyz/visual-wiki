@@ -16,16 +16,25 @@ describe("playableCardSchema", () => {
     });
   });
 
-  it("accepts iframe runtime with https entry", () => {
+  it("collapses legacy iframe runtime to a redirect, never iframe", () => {
     const parsed = playableCardSchema.parse({
       ...valid,
       runtime: "iframe",
       entry: "https://glitchworks.tech",
       display: "ogl",
     });
-    expect(parsed.runtime).toBe("iframe");
+    expect(parsed.runtime).toBe("redirect");
     expect(parsed.entry).toBe("https://glitchworks.tech");
     expect(parsed.display).toBe("ogl");
+  });
+
+  it("maps media file entries to html5", () => {
+    const parsed = playableCardSchema.parse({
+      ...valid,
+      runtime: "iframe",
+      entry: "https://example.com/demo.mp3",
+    });
+    expect(parsed.runtime).toBe("html5");
   });
 
   it("accepts stub runtimes webcontainer and vm", () => {

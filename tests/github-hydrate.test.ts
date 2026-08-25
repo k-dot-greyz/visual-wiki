@@ -64,7 +64,7 @@ describe("hydrateGithub", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.card.repo).toBe("https://github.com/nari-labs/dia");
-    expect(result.card.runtime).toBe("iframe");
+    expect(result.card.runtime).toBe("redirect");
     expect(result.card.entry).toBe("https://example.com/dia");
     expect(result.title).toBe("nari-labs/dia");
     expect(result.tree.map((n) => n.path)).toContain("README.md");
@@ -109,5 +109,33 @@ describe("hydrateGithub", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe("Failed to reach GitHub");
+  });
+
+  it("URL-encodes slash-containing default branches in the tree request", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/repos/nari-labs/dia") && !url.includes("/git/trees/")) {
+        return new Response(
+          JSON.stringify({
+            full_name: "nari-labs/dia",
+            private: false,
+            default_branch: "release/2026",
+            html_url: "https://github.com/nari-labs/dia",
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      if (url.includes("/git/trees/")) {
+        expect(url).toContain("release%2F2026");
+        return new Response(JSON.stringify({ tree: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response("nope", { status: 404 });
+    });
+
+    const result = await hydrateGithub("https://github.com/nari-labs/dia", { fetch: fetchMock });
+    expect(result.ok).toBe(true);
   });
 });

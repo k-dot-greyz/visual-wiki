@@ -12,6 +12,10 @@ describe("isSafeUrl", () => {
     expect(isSafeUrl("https://10.0.0.1/x")).toBe(false);
     expect(isSafeUrl("https://192.168.1.1/x")).toBe(false);
     expect(isSafeUrl("https://169.254.169.254/latest")).toBe(false);
+    expect(isSafeUrl("http://198.18.0.1/bench")).toBe(false);
+    expect(isSafeUrl("http://198.19.1.1/bench")).toBe(false);
+    expect(isSafeUrl("http://192.0.2.1/docs")).toBe(false);
+    expect(isSafeUrl("http://224.0.0.1/mcast")).toBe(false);
   });
 
   it("blocks the full 127.0.0.0/8 loopback range, not just 127.0.0.1", () => {

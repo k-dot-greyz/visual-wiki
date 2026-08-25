@@ -3,6 +3,7 @@ import { getResources, addResourceDirect } from "@/app/actions";
 import { Resource } from "@/lib/types";
 import { parseGitHubRepo } from "@/lib/github-hydrate";
 import { isSafeUrl, isSafeUrlResolved, safeFetch, readCappedText } from "@/lib/safe-url";
+import { rejectUnsafePipePost } from "@/lib/pipe-ingress";
 
 // GET Handshake / Sync info
 export async function GET() {
@@ -41,7 +42,7 @@ export async function GET() {
 
 // Fetch GitHub repository metadata from the public API
 async function fetchGitHubMetadata(owner: string, repo: string) {
-  const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
+  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
   const response = await fetch(apiUrl, {
     headers: {
       "User-Agent": "visual-wiki-pipe-agent",
@@ -182,6 +183,9 @@ async function fetchWebpageMetadata(url: string) {
 
 // POST Ingestion / Pipe endpoint
 export async function POST(request: NextRequest) {
+  const blocked = rejectUnsafePipePost(request);
+  if (blocked) return blocked;
+
   try {
     const body = await request.json();
     const { type, url, payload } = body;
