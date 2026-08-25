@@ -61,11 +61,72 @@ describe("POST /api/pipe — raw mode link validation", () => {
     expect(addResourceDirectMock).not.toHaveBeenCalled();
   });
 
+  it("rejects plaintext http image URLs with 400", async () => {
+    const res = await makeRawPost({
+      title: "Mixed content",
+      link: "https://github.com/nari-labs/dia",
+      image: "http://tracker.example/beacon.png",
+    });
+    expect(res.status).toBe(400);
+    expect(addResourceDirectMock).not.toHaveBeenCalled();
+  });
+
+  it("clamps an unknown category back onto the enum", async () => {
+    const res = await makeRawPost({
+      title: "Weird",
+      link: "https://github.com/nari-labs/dia",
+      category: "<img src=x onerror=alert(1)>",
+    });
+    expect(res.status).toBe(200);
+    expect(addResourceDirectMock.mock.calls[0][0]).toMatchObject({ category: "example" });
+  });
+
   it("accepts a valid https link and persists the resource", async () => {
     const res = await makeRawPost({ title: "Good", link: "https://github.com/nari-labs/dia" });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
+    expect(addResourceDirectMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("POST /api/pipe — cross-origin write guards", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    addResourceDirectMock.mockClear();
+    delete process.env.VISUAL_WIKI_PIPE_TOKEN;
+  });
+
+  it("rejects a simple-request content type that would skip CORS preflight", async () => {
+    const { POST } = await import("@/app/api/pipe/route");
+    const req = new NextRequest("http://localhost/api/pipe", {
+      method: "POST",
+      body: JSON.stringify({ type: "raw", payload: { title: "CSRF", link: "https://evil.example" } }),
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(415);
+    expect(addResourceDirectMock).not.toHaveBeenCalled();
+  });
+
+  it("requires the pipe token when one is configured", async () => {
+    process.env.VISUAL_WIKI_PIPE_TOKEN = "s3cret";
+    const { POST } = await import("@/app/api/pipe/route");
+    const build = (headers: Record<string, string>) =>
+      new NextRequest("http://localhost/api/pipe", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "raw",
+          payload: { title: "Good", link: "https://github.com/nari-labs/dia" },
+        }),
+        headers: { "Content-Type": "application/json", ...headers },
+      });
+
+    expect((await POST(build({}))).status).toBe(401);
+    expect((await POST(build({ "x-pipe-token": "wrong" }))).status).toBe(401);
+    expect(addResourceDirectMock).not.toHaveBeenCalled();
+
+    expect((await POST(build({ "x-pipe-token": "s3cret" }))).status).toBe(200);
     expect(addResourceDirectMock).toHaveBeenCalledTimes(1);
   });
 });

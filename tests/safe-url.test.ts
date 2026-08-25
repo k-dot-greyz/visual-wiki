@@ -23,6 +23,19 @@ describe("isSafeUrl", () => {
     expect(isSafeUrl("http://0x7f.0.0.1/")).toBe(false);
   });
 
+  it("blocks trailing-dot FQDNs that resolve to blocked names", () => {
+    expect(isSafeUrl("https://localhost./x")).toBe(false);
+    expect(isSafeUrl("https://box.local./x")).toBe(false);
+    expect(isSafeUrl("https://svc.internal../x")).toBe(false);
+    expect(isSafeUrl("https://api.localhost/x")).toBe(false);
+    expect(isSafeUrl("https://router.home.arpa/x")).toBe(false);
+  });
+
+  it("blocks URLs carrying embedded credentials", () => {
+    expect(isSafeUrl("https://github.com@evil.example/x")).toBe(false);
+    expect(isSafeUrl("https://user:pass@evil.example/x")).toBe(false);
+  });
+
   it("blocks bracketed IPv6 private and link-local literals", () => {
     expect(isSafeUrl("http://[::1]/")).toBe(false);
     expect(isSafeUrl("http://[0:0:0:0:0:0:0:1]/")).toBe(false);

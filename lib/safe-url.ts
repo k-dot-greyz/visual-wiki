@@ -1,10 +1,16 @@
 import { lookup } from "dns/promises";
 import { isIP } from "net";
 
-/** Strip brackets from IPv6 literals returned by URL.hostname. */
+/**
+ * Strip brackets from IPv6 literals returned by URL.hostname, and drop the
+ * trailing dot of a fully-qualified name. `https://localhost./` resolves to
+ * loopback but is not string-equal to `localhost`, so without this the
+ * suffix checks below are trivially bypassed.
+ */
 function normalizeHostname(hostname: string): string {
-  const h = hostname.toLowerCase();
+  let h = hostname.toLowerCase();
   if (h.startsWith("[") && h.endsWith("]")) return h.slice(1, -1);
+  while (h.endsWith(".")) h = h.slice(0, -1);
   return h;
 }
 
@@ -58,12 +64,19 @@ export function isSafeUrl(urlString: string): boolean {
     const url = new URL(urlString);
     if (url.protocol !== "http:" && url.protocol !== "https:") return false;
 
+    // `https://github.com@evil.example/` renders like GitHub but resolves to
+    // evil.example. Reject embedded credentials rather than display a lie.
+    if (url.username || url.password) return false;
+
     const hostname = normalizeHostname(url.hostname);
+    if (!hostname) return false;
 
     if (
       hostname === "localhost" ||
+      hostname.endsWith(".localhost") ||
       hostname.endsWith(".local") ||
-      hostname.endsWith(".internal")
+      hostname.endsWith(".internal") ||
+      hostname.endsWith(".home.arpa")
     ) {
       return false;
     }

@@ -67,7 +67,13 @@ Every feature, integration, or refactoring in `visual-wiki` must be designed as 
 ### 2.3. Open Piping (Strict Inter-Process Communication)
 
 * **Rule**: Communicate via strictly typed, isolated message events rather than direct state mutation.
-* **Application**: Interaction between visual modules, integrations, or parent window contexts must utilize web-standard communication protocols—such as custom DOM events (e.g., `visual-wiki:resource-added`), standard JSON-RPC over `postMessage` (for iframe environments), or strictly validated REST endpoints—instead of global variable leaking.
+* **Application**: Interaction between visual modules, integrations, or parent window contexts must utilize web-standard communication protocols—such as custom DOM events (e.g., `visual-wiki:resource-added`) or strictly validated REST endpoints—instead of global variable leaking.
+
+### 2.3.1. No Third-Party Frames (Hard Rule)
+
+* **Rule**: This app never embeds a document it does not control. No `<iframe>`, `<frame>`, `<object>`, or `<embed>`, sandboxed or otherwise.
+* **Why**: Card `entry` URLs are attacker-controlled — any GitHub user can point a repo `homepage` at any https URL, and `/play?repo=` makes that a shareable link that would run unvetted third-party script in a visitor's browser. `sandbox` narrows the blast radius but does not remove it, and Chromium has shipped iframe-sandbox navigation-restriction bypasses (CVE-2026-8563, CVE-2026-5903).
+* **Application**: Direct media URLs render through native `<audio>`/`<video>` with `preload="none"`. Everything else becomes an explicit, user-initiated link-out with `rel="noopener noreferrer nofollow external"` and `referrerpolicy="no-referrer"`. See `lib/run-pane.ts`. The rule is enforced two ways: a source scan in `tests/run-pane.test.ts`, and `frame-src 'none'` in the CSP from `next.config.ts`. If you need embedded execution, it belongs on a separate isolated origin, not here.
 
 ### 2.4. Boundary Validation (The "Hostile Edge")
 

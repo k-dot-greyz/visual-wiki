@@ -4,6 +4,70 @@ import { Resource } from "@/lib/types";
 import { parseGitHubRepo } from "@/lib/github-hydrate";
 import { isSafeUrl, isSafeUrlResolved, safeFetch, readCappedText } from "@/lib/safe-url";
 
+const CATEGORIES: Resource["category"][] = ["official", "example", "tutorial", "repo", "pattern"];
+
+function normalizeCategory(value: unknown): Resource["category"] | undefined {
+  return typeof value === "string" && (CATEGORIES as string[]).includes(value)
+    ? (value as Resource["category"])
+    : undefined;
+}
+
+/** Images are rendered in the browser, so http here would mean mixed content. */
+function isSafeImageUrl(value: unknown): value is string {
+  return typeof value === "string" && /^https:\/\//i.test(value) && isSafeUrl(value);
+}
+
+type ScrapedMetadata = Omit<Resource, "id" | "addedAt">;
+
+/** Merge caller-supplied overrides, keeping category on its enum and fields bounded. */
+function applyPayloadOverrides(metadata: ScrapedMetadata, payload: unknown): void {
+  if (!payload || typeof payload !== "object") return;
+  const p = payload as Record<string, unknown>;
+
+  if (typeof p.title === "string" && p.title.trim()) metadata.title = p.title.slice(0, 300);
+  if (typeof p.description === "string" && p.description.trim()) {
+    metadata.description = p.description.slice(0, 2000);
+  }
+  const category = normalizeCategory(p.category);
+  if (category) metadata.category = category;
+  if (Array.isArray(p.tags)) {
+    const extra = p.tags.filter((t): t is string => typeof t === "string").map((t) => t.slice(0, 40));
+    metadata.tags = Array.from(new Set([...metadata.tags, ...extra])).slice(0, 12);
+  }
+}
+
+/**
+ * `/api/pipe` POST writes to disk with no session behind it. Two guards keep a
+ * random web page from driving it through a visitor's browser:
+ *  - requiring `application/json` forces a CORS preflight, which a cross-origin
+ *    page cannot satisfy (a `text/plain` form post is a "simple request" and
+ *    would otherwise go straight through);
+ *  - when `VISUAL_WIKI_PIPE_TOKEN` is set, a matching bearer/`x-pipe-token`
+ *    header is also required.
+ */
+function rejectUnauthorizedPipe(request: NextRequest): NextResponse | null {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return NextResponse.json(
+      { error: "Content-Type must be application/json" },
+      { status: 415 },
+    );
+  }
+
+  const expected = process.env.VISUAL_WIKI_PIPE_TOKEN;
+  if (expected) {
+    const presented =
+      request.headers.get("x-pipe-token") ??
+      request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+      "";
+    if (presented !== expected) {
+      return NextResponse.json({ error: "Pipe token required" }, { status: 401 });
+    }
+  }
+
+  return null;
+}
+
 // GET Handshake / Sync info
 export async function GET() {
   try {
@@ -174,7 +238,7 @@ async function fetchWebpageMetadata(url: string) {
     category,
     tags,
     link: url,
-    image: image && isSafeUrl(image)
+    image: isSafeImageUrl(image)
       ? image
       : `https://picsum.photos/id/${Math.floor(Math.random() * 800) + 100}/800/450`,
   };
@@ -182,6 +246,9 @@ async function fetchWebpageMetadata(url: string) {
 
 // POST Ingestion / Pipe endpoint
 export async function POST(request: NextRequest) {
+  const unauthorized = rejectUnauthorizedPipe(request);
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await request.json();
     const { type, url, payload } = body;
@@ -204,18 +271,18 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (image && !isSafeUrl(image)) {
+      if (image && !isSafeImageUrl(image)) {
         return NextResponse.json(
-          { error: "SSRF Prevention: image must be an http or https URL pointing to a public host." },
+          { error: "SSRF Prevention: image must be an https URL pointing to a public host." },
           { status: 400 }
         );
       }
 
       const resource = await addResourceDirect({
-        title,
-        description: description || "No description provided.",
-        category: category || "example",
-        tags: Array.isArray(tags) ? tags : ["raw"],
+        title: String(title).slice(0, 300),
+        description: String(description || "No description provided.").slice(0, 2000),
+        category: normalizeCategory(category) ?? "example",
+        tags: Array.isArray(tags) ? tags.slice(0, 12).map((t) => String(t).slice(0, 40)) : ["raw"],
         link,
         image: image || `https://picsum.photos/id/${Math.floor(Math.random() * 800) + 100}/800/450`,
       });
@@ -260,12 +327,7 @@ export async function POST(request: NextRequest) {
         const parsedMetadata = await fetchGitHubMetadata(githubParams.owner, githubParams.repo);
 
         // Merge optional overrides from user payload
-        if (payload) {
-          if (payload.title) parsedMetadata.title = payload.title;
-          if (payload.description) parsedMetadata.description = payload.description;
-          if (payload.category) parsedMetadata.category = payload.category;
-          if (Array.isArray(payload.tags)) parsedMetadata.tags = Array.from(new Set([...parsedMetadata.tags, ...payload.tags]));
-        }
+        applyPayloadOverrides(parsedMetadata, payload);
 
         const resource = await addResourceDirect(parsedMetadata);
         return NextResponse.json({ success: true, method: "github-api", resource });
@@ -279,12 +341,7 @@ export async function POST(request: NextRequest) {
       const parsedMetadata = await fetchWebpageMetadata(url);
 
       // Merge optional overrides from user payload
-      if (payload) {
-        if (payload.title) parsedMetadata.title = payload.title;
-        if (payload.description) parsedMetadata.description = payload.description;
-        if (payload.category) parsedMetadata.category = payload.category;
-        if (Array.isArray(payload.tags)) parsedMetadata.tags = Array.from(new Set([...parsedMetadata.tags, ...payload.tags]));
-      }
+      applyPayloadOverrides(parsedMetadata, payload);
 
       const resource = await addResourceDirect(parsedMetadata);
       return NextResponse.json({ success: true, method: "web-scraper", resource });

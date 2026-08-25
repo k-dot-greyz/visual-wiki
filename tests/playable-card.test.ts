@@ -16,16 +16,26 @@ describe("playableCardSchema", () => {
     });
   });
 
-  it("accepts iframe runtime with https entry", () => {
+  it("accepts link runtime with https entry", () => {
     const parsed = playableCardSchema.parse({
       ...valid,
-      runtime: "iframe",
+      runtime: "link",
       entry: "https://glitchworks.tech",
       display: "ogl",
     });
-    expect(parsed.runtime).toBe("iframe");
+    expect(parsed.runtime).toBe("link");
     expect(parsed.entry).toBe("https://glitchworks.tech");
     expect(parsed.display).toBe("ogl");
+  });
+
+  it("rejects the retired iframe runtime outright", () => {
+    expect(
+      playableCardSchema.safeParse({
+        ...valid,
+        runtime: "iframe",
+        entry: "https://evil.example",
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts stub runtimes webcontainer and vm", () => {
@@ -63,21 +73,21 @@ describe("playableCardSchema", () => {
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "link",
         entry: "javascript:alert(1)",
       }).success,
     ).toBe(false);
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "link",
         entry: "https://localhost/preview",
       }).success,
     ).toBe(false);
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "link",
         entry: "https://[fe80::1]/",
       }).success,
     ).toBe(false);

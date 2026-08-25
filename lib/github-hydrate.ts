@@ -1,5 +1,6 @@
 import { isSafeUrl } from "./safe-url";
 import { playableCardSchema, type PlayableCard } from "./playable-card";
+import { planEntry } from "./run-pane";
 
 export type TreeNode = { path: string; type: "blob" | "tree" };
 
@@ -16,6 +17,7 @@ export type HydrateOk = {
 export type HydrateErr = { ok: false; error: string };
 
 const TREE_CAP = 80;
+const GITHUB_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export function parseGitHubRepo(url: string): { owner: string; repo: string } | null {
   try {
@@ -23,9 +25,11 @@ export function parseGitHubRepo(url: string): { owner: string; repo: string } | 
     if (parsed.hostname.toLowerCase() !== "github.com") return null;
     const segments = parsed.pathname.split("/").filter(Boolean);
     if (segments.length < 2) return null;
-    const owner = segments[0];
-    const repo = segments[1].replace(/\.git$/i, "");
-    if (!owner || !repo) return null;
+    const owner = decodeURIComponent(segments[0]);
+    const repo = decodeURIComponent(segments[1]).replace(/\.git$/i, "");
+    // GitHub's own charset. Rejecting anything else keeps encoded separators
+    // and traversal sequences out of the api.github.com path we build below.
+    if (!GITHUB_NAME.test(owner) || !GITHUB_NAME.test(repo)) return null;
     return { owner, repo };
   } catch {
     return null;
@@ -80,11 +84,12 @@ export async function hydrateGithub(
       meta.homepage && /^https:\/\//i.test(meta.homepage) && isSafeUrl(meta.homepage)
         ? meta.homepage
         : undefined;
+    const entryPlan = planEntry(homepage);
     const cardParsed = playableCardSchema.safeParse({
       kind: "playable",
       repo: htmlUrl,
-      runtime: homepage ? "iframe" : "none",
-      entry: homepage,
+      runtime: entryPlan ? (entryPlan.kind === "link" ? "link" : "media") : "none",
+      entry: entryPlan ? homepage : undefined,
       display: "tree",
     });
 
@@ -92,7 +97,8 @@ export async function hydrateGithub(
       return { ok: false, error: "Playable card failed validation" };
     }
 
-    const branch = meta.default_branch || "main";
+    const rawBranch = meta.default_branch || "main";
+    const branch = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(rawBranch) ? rawBranch : "main";
     const treeRes = await fetchImpl(
       `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/${branch}?recursive=1`,
       {
