@@ -34,6 +34,25 @@ describe("isSafeUrl", () => {
     expect(isSafeUrl("http://[::ffff:127.0.0.1]/")).toBe(false);
   });
 
+  it("blocks reserved, benchmarking, test-net, and multicast IPv4 ranges", () => {
+    expect(isSafeUrl("http://198.18.0.1/")).toBe(false); // benchmarking 198.18.0.0/15
+    expect(isSafeUrl("http://198.19.255.255/")).toBe(false);
+    expect(isSafeUrl("http://192.0.2.5/")).toBe(false); // TEST-NET-1
+    expect(isSafeUrl("http://198.51.100.5/")).toBe(false); // TEST-NET-2
+    expect(isSafeUrl("http://203.0.113.5/")).toBe(false); // TEST-NET-3
+    expect(isSafeUrl("http://192.88.99.1/")).toBe(false); // 6to4 relay anycast
+    expect(isSafeUrl("http://224.0.0.1/")).toBe(false); // multicast
+    expect(isSafeUrl("http://240.0.0.1/")).toBe(false); // reserved
+    expect(isSafeUrl("http://255.255.255.255/")).toBe(false); // broadcast
+  });
+
+  it("blocks unspecified, multicast, and transition IPv6 ranges", () => {
+    expect(isSafeUrl("http://[::]/")).toBe(false); // unspecified
+    expect(isSafeUrl("http://[ff02::1]/")).toBe(false); // multicast
+    expect(isSafeUrl("http://[2002:c0a8:0101::1]/")).toBe(false); // 6to4 embedding 192.168.1.1
+    expect(isSafeUrl("http://[64:ff9b::7f00:1]/")).toBe(false); // NAT64 embedding 127.0.0.1
+  });
+
   it("blocks javascript:, data:, and garbage schemes", () => {
     expect(isSafeUrl("javascript:alert(1)")).toBe(false);
     expect(isSafeUrl("data:text/html,<script>evil()</script>")).toBe(false);

@@ -5,7 +5,7 @@ const hydrateFixture = {
   card: {
     kind: "playable",
     repo: "https://github.com/nari-labs/dia",
-    runtime: "iframe",
+    runtime: "external",
     entry: "https://example.com/dia",
     display: "tree",
   },
@@ -20,7 +20,7 @@ const hydrateFixture = {
 };
 
 test.describe("Playground", () => {
-  test("hydrates a public repo, sandboxes the iframe, and skips ogl under reduced motion", async ({
+  test("hydrates a public repo, redirects out instead of embedding, and skips ogl under reduced motion", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -39,13 +39,17 @@ test.describe("Playground", () => {
     await expect(page.getByRole("heading", { name: "nari-labs/dia" })).toBeVisible();
     await expect(page.getByRole("listitem").filter({ hasText: "README.md" })).toBeVisible();
 
-    const iframe = page.locator("iframe[title='Sandboxed live preview']");
-    await expect(iframe).toBeVisible();
-    const sandbox = await iframe.getAttribute("sandbox");
-    expect(sandbox).toContain("allow-scripts");
-    expect(sandbox).not.toContain("allow-same-origin");
-    expect(sandbox).not.toContain("allow-popups-to-escape-sandbox");
-    await expect(iframe).toHaveAttribute("referrerpolicy", "no-referrer");
+    // No iframe is ever mounted — the live site is a safe redirect, not an embed.
+    await expect(page.locator("iframe")).toHaveCount(0);
+
+    const external = page.locator("a[data-run='external']");
+    await expect(external).toBeVisible();
+    await expect(external).toHaveAttribute("href", "https://example.com/dia");
+    await expect(external).toHaveAttribute("target", "_blank");
+    const rel = (await external.getAttribute("rel")) ?? "";
+    expect(rel).toContain("noopener");
+    expect(rel).toContain("noreferrer");
+    await expect(external).toHaveAttribute("referrerpolicy", "no-referrer");
 
     await expect(page.locator("[data-ogl='on']")).toHaveCount(0);
   });

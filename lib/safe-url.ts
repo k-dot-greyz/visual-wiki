@@ -24,22 +24,36 @@ function parseIpv4Mapped(ipv6: string): string | null {
 function isPrivateIpv4(ip: string): boolean {
   const parts = ip.split(".").map(Number);
   if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n) || n < 0 || n > 255)) return true;
-  if (parts[0] === 10) return true;
-  if (parts[0] === 127) return true;
-  if (parts[0] === 0) return true;
-  if (parts[0] === 169 && parts[1] === 254) return true;
-  if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
-  if (parts[0] === 192 && parts[1] === 168) return true;
-  if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true;
+  const [a, b, c] = parts;
+  if (a === 10) return true; // 10.0.0.0/8 private
+  if (a === 127) return true; // 127.0.0.0/8 loopback
+  if (a === 0) return true; // 0.0.0.0/8 "this host"
+  if (a === 169 && b === 254) return true; // 169.254.0.0/16 link-local (incl. cloud metadata)
+  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12 private
+  if (a === 192 && b === 168) return true; // 192.168.0.0/16 private
+  if (a === 100 && b >= 64 && b <= 127) return true; // 100.64.0.0/10 CGNAT
+  if (a === 192 && b === 0 && c === 0) return true; // 192.0.0.0/24 IETF protocol assignments
+  if (a === 192 && b === 0 && c === 2) return true; // 192.0.2.0/24 TEST-NET-1
+  if (a === 198 && (b === 18 || b === 19)) return true; // 198.18.0.0/15 benchmarking (RFC 2544)
+  if (a === 198 && b === 51 && c === 100) return true; // 198.51.100.0/24 TEST-NET-2
+  if (a === 203 && b === 0 && c === 113) return true; // 203.0.113.0/24 TEST-NET-3
+  if (a === 192 && b === 88 && c === 99) return true; // 192.88.99.0/24 6to4 relay anycast
+  if (a >= 224 && a <= 239) return true; // 224.0.0.0/4 multicast
+  if (a >= 240) return true; // 240.0.0.0/4 reserved + 255.255.255.255 broadcast
   return false;
 }
 
 function isPrivateIpv6(ip: string): boolean {
   const lower = ip.toLowerCase();
-  if (lower === "::1" || lower === "0:0:0:0:0:0:0:1") return true;
+  if (lower === "::1" || lower === "0:0:0:0:0:0:0:1") return true; // loopback
+  if (lower === "::" || lower === "0:0:0:0:0:0:0:0") return true; // unspecified
   // fe80::/10 — fe80 through febf, not just the fe80: prefix
   if (/^fe[89ab][0-9a-f]:/i.test(lower)) return true;
-  if (/^f[cd][0-9a-f]/i.test(lower)) return true;
+  if (/^f[cd][0-9a-f]/i.test(lower)) return true; // fc00::/7 unique local
+  if (/^ff[0-9a-f][0-9a-f]:/i.test(lower)) return true; // ff00::/8 multicast
+  // Transition ranges that can smuggle an embedded/translated IPv4 destination.
+  if (/^2002:/i.test(lower)) return true; // 6to4 (deprecated, RFC 7526)
+  if (/^64:ff9b:/i.test(lower)) return true; // NAT64 well-known prefix (RFC 6052)
   const mapped = parseIpv4Mapped(lower);
   if (mapped) return isPrivateIpv4(mapped);
   return false;
@@ -100,7 +114,19 @@ export async function isSafeUrlResolved(urlString: string): Promise<boolean> {
 
 const MAX_REDIRECTS = 5;
 
-/** Fetch with redirects disabled; validates each hop before following. */
+/**
+ * Fetch with redirects disabled; validates each hop (DNS-resolved) before following.
+ *
+ * KNOWN RESIDUAL — DNS rebinding (TOCTOU): `isSafeUrlResolved` resolves the host and
+ * validates the address, then `fetch` resolves it AGAIN to open the socket. A hostile
+ * authoritative server with a sub-second TTL can answer public on the check and private
+ * on the connect. This narrows the window (fail-closed on unresolvable names, per-hop
+ * revalidation, redirects disabled) but does not close it. Fully closing it requires
+ * pinning the validated address at the socket layer (e.g. an undici Agent with a custom
+ * `connect`/`lookup`) so the connection cannot be redirected to a different IP. The
+ * stronger backstop is network-level egress policy (block RFC1918 + metadata at the
+ * container). Do not treat this validator as the only barrier for server-side fetches.
+ */
 export async function safeFetch(
   url: string,
   init?: RequestInit,

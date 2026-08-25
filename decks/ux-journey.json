@@ -747,7 +747,7 @@
       "def": 75,
       "spd": 48
     },
-    "desc": "A different vantage. Hydrate a public repo into tree plus a sandboxed iframe.",
+    "desc": "A different vantage. Hydrate a public repo into tree plus a safe live-site redirect.",
     "image": "text-cyan-400",
     "icon": "Eye",
     "metadata": {
@@ -770,7 +770,7 @@
                 "card": {
                   "kind": "playable",
                   "repo": "https://github.com/nari-labs/dia",
-                  "runtime": "iframe",
+                  "runtime": "external",
                   "entry": "https://example.com/dia",
                   "display": "tree"
                 },
@@ -809,19 +809,23 @@
               "selector": "li:has-text('README.md')"
             },
             {
+              "action": "expectCount",
+              "selector": "iframe",
+              "count": 0
+            },
+            {
               "action": "expectVisible",
-              "selector": "iframe[title='Sandboxed live preview']"
+              "selector": "a[data-run='external']"
             },
             {
               "action": "expectAttribute",
-              "selector": "iframe[title='Sandboxed live preview']",
-              "attribute": "sandbox",
-              "contains": "allow-scripts",
-              "notContains": "allow-same-origin"
+              "selector": "a[data-run='external']",
+              "attribute": "rel",
+              "contains": "noreferrer"
             },
             {
               "action": "expectAttribute",
-              "selector": "iframe[title='Sandboxed live preview']",
+              "selector": "a[data-run='external']",
               "attribute": "referrerpolicy",
               "contains": "no-referrer"
             }
@@ -867,7 +871,7 @@
                 "card": {
                   "kind": "playable",
                   "repo": "https://github.com/nari-labs/dia",
-                  "runtime": "iframe",
+                  "runtime": "external",
                   "entry": "https://example.com/dia",
                   "display": "tree"
                 },
@@ -907,7 +911,7 @@
                   "image": "https://picsum.photos/id/160/800/450",
                   "addedAt": "2026-08-21",
                   "kind": "playable",
-                  "runtime": "iframe",
+                  "runtime": "external",
                   "entry": "https://example.com/dia",
                   "display": "tree"
                 }
@@ -972,7 +976,7 @@
                 "card": {
                   "kind": "playable",
                   "repo": "https://github.com/nari-labs/dia",
-                  "runtime": "iframe",
+                  "runtime": "external",
                   "entry": "https://example.com/dia",
                   "display": "tree"
                 },

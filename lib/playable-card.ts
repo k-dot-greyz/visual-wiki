@@ -18,7 +18,10 @@ const safeHttpsEntry = z
 export const playableCardSchema = z.object({
   kind: z.literal("playable"),
   repo: githubRepoUrl,
-  runtime: z.enum(["none", "iframe", "webcontainer", "vm"]).default("none"),
+  // "iframe" was removed: embedding attacker-influenced homepages with allow-scripts is a
+  // browser-side SSRF/phishing pivot. Live entries now open out (external) or play inline
+  // via native media elements (media). See lib/run-pane.ts + components/RunPane.tsx.
+  runtime: z.enum(["none", "external", "media", "webcontainer", "vm"]).default("none"),
   entry: safeHttpsEntry.optional(),
   display: z.enum(["tree", "ogl"]).default("tree"),
 });

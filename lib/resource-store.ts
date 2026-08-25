@@ -16,7 +16,7 @@ export const resourceSchema = z.object({
   image: z.string(),
   addedAt: z.string(),
   kind: z.enum(["resource", "playable"]).optional(),
-  runtime: z.enum(["none", "iframe", "webcontainer", "vm"]).optional(),
+  runtime: z.enum(["none", "external", "media", "webcontainer", "vm"]).optional(),
   entry: z.string().optional(),
   display: z.enum(["tree", "ogl"]).optional(),
 });

@@ -16,16 +16,33 @@ describe("playableCardSchema", () => {
     });
   });
 
-  it("accepts iframe runtime with https entry", () => {
+  it("accepts external runtime with https entry", () => {
     const parsed = playableCardSchema.parse({
       ...valid,
-      runtime: "iframe",
+      runtime: "external",
       entry: "https://glitchworks.tech",
       display: "ogl",
     });
-    expect(parsed.runtime).toBe("iframe");
+    expect(parsed.runtime).toBe("external");
     expect(parsed.entry).toBe("https://glitchworks.tech");
     expect(parsed.display).toBe("ogl");
+  });
+
+  it("accepts media runtime with https entry", () => {
+    const parsed = playableCardSchema.parse({
+      ...valid,
+      runtime: "media",
+      entry: "https://cdn.example.com/track.mp3",
+    });
+    expect(parsed.runtime).toBe("media");
+    expect(parsed.entry).toBe("https://cdn.example.com/track.mp3");
+  });
+
+  it("rejects the removed iframe runtime", () => {
+    expect(
+      playableCardSchema.safeParse({ ...valid, runtime: "iframe", entry: "https://glitchworks.tech" })
+        .success,
+    ).toBe(false);
   });
 
   it("accepts stub runtimes webcontainer and vm", () => {
@@ -63,21 +80,21 @@ describe("playableCardSchema", () => {
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "external",
         entry: "javascript:alert(1)",
       }).success,
     ).toBe(false);
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "external",
         entry: "https://localhost/preview",
       }).success,
     ).toBe(false);
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "external",
         entry: "https://[fe80::1]/",
       }).success,
     ).toBe(false);

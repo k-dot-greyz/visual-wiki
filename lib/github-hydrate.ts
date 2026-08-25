@@ -1,4 +1,5 @@
 import { isSafeUrl } from "./safe-url";
+import { isMediaUrl } from "./run-pane";
 import { playableCardSchema, type PlayableCard } from "./playable-card";
 
 export type TreeNode = { path: string; type: "blob" | "tree" };
@@ -83,7 +84,7 @@ export async function hydrateGithub(
     const cardParsed = playableCardSchema.safeParse({
       kind: "playable",
       repo: htmlUrl,
-      runtime: homepage ? "iframe" : "none",
+      runtime: homepage ? (isMediaUrl(homepage) ? "media" : "external") : "none",
       entry: homepage,
       display: "tree",
     });
