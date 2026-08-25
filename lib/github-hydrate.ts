@@ -83,7 +83,7 @@ export async function hydrateGithub(
     const cardParsed = playableCardSchema.safeParse({
       kind: "playable",
       repo: htmlUrl,
-      runtime: homepage ? "iframe" : "none",
+      runtime: homepage ? "redirect" : "none",
       entry: homepage,
       display: "tree",
     });

@@ -11,7 +11,7 @@ Curate once. Feed your agents forever.
 - **Export for AI** — downloads JSON + copies a prompt-ready summary
 - **Copy for AI** per card — structured text block for agents
 - Random resource picker
-- **Playground** (`/play`) — hydrate a public GitHub repo into a playable card (tree + sandboxed iframe). Node in-tab and hosted venv are stubbed.
+- **Playground** (`/play`) — hydrate a public GitHub repo into a playable card (tree + external redirect preview, HTML5 media when direct). Node in-tab and hosted venv are stubbed.
 
 ## Stack
 

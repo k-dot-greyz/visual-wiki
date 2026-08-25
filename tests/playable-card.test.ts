@@ -16,14 +16,14 @@ describe("playableCardSchema", () => {
     });
   });
 
-  it("accepts iframe runtime with https entry", () => {
+  it("accepts redirect runtime with https entry", () => {
     const parsed = playableCardSchema.parse({
       ...valid,
-      runtime: "iframe",
+      runtime: "redirect",
       entry: "https://glitchworks.tech",
       display: "ogl",
     });
-    expect(parsed.runtime).toBe("iframe");
+    expect(parsed.runtime).toBe("redirect");
     expect(parsed.entry).toBe("https://glitchworks.tech");
     expect(parsed.display).toBe("ogl");
   });
@@ -63,21 +63,21 @@ describe("playableCardSchema", () => {
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "redirect",
         entry: "javascript:alert(1)",
       }).success,
     ).toBe(false);
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "redirect",
         entry: "https://localhost/preview",
       }).success,
     ).toBe(false);
     expect(
       playableCardSchema.safeParse({
         ...valid,
-        runtime: "iframe",
+        runtime: "redirect",
         entry: "https://[fe80::1]/",
       }).success,
     ).toBe(false);

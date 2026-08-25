@@ -1,10 +1,34 @@
 import type { PlayableCard } from "./playable-card";
 
-export function iframeSandbox(): { sandbox: string; referrerPolicy: string } {
-  return {
-    sandbox: "allow-scripts allow-forms allow-popups",
-    referrerPolicy: "no-referrer",
-  };
+export type MediaKind = "video" | "audio" | null;
+
+const VIDEO_EXT = /\.(mp4|webm|mov|m4v)(\?|#|$)/i;
+const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|aac|flac)(\?|#|$)/i;
+
+/** Detect direct media URLs suitable for native HTML5 playback (no iframe). */
+export function detectMediaKind(url: string): MediaKind {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    if (AUDIO_EXT.test(pathname)) return "audio";
+    if (VIDEO_EXT.test(pathname)) return "video";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function externalPreviewCopy(card: PlayableCard): string {
+  if (card.runtime === "redirect" && card.entry) {
+    const media = detectMediaKind(card.entry);
+    if (media === "video") {
+      return "Direct video preview plays here with the native HTML5 player. Full site opens in a new tab.";
+    }
+    if (media === "audio") {
+      return "Direct audio preview plays here with the native HTML5 player. Full site opens in a new tab.";
+    }
+    return "Live preview opens in a new tab — we never embed third-party pages in an iframe.";
+  }
+  return runtimeStubCopy(card.runtime);
 }
 
 export function runtimeStubCopy(runtime: PlayableCard["runtime"]): string {
@@ -14,5 +38,5 @@ export function runtimeStubCopy(runtime: PlayableCard["runtime"]): string {
   if (runtime === "vm") {
     return "Hosted venv is the next pipe. A VM preview URL will land here later.";
   }
-  return "Open on GitHub — this repo has no live homepage to iframe yet.";
+  return "Open on GitHub — this repo has no live homepage to preview yet.";
 }

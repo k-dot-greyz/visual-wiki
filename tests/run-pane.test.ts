@@ -1,19 +1,42 @@
 import { describe, expect, it } from "vitest";
-import { iframeSandbox, runtimeStubCopy } from "@/lib/run-pane";
+import { detectMediaKind, externalPreviewCopy, runtimeStubCopy } from "@/lib/run-pane";
 
-describe("iframeSandbox", () => {
-  it("uses a restricted sandbox without allow-same-origin", () => {
-    const attrs = iframeSandbox();
-    expect(attrs.sandbox.split(" ")).toEqual(
-      expect.arrayContaining(["allow-scripts", "allow-forms", "allow-popups"]),
-    );
-    expect(attrs.sandbox).not.toMatch(/allow-same-origin/);
-    expect(attrs.referrerPolicy).toBe("no-referrer");
+describe("detectMediaKind", () => {
+  it("detects common video extensions", () => {
+    expect(detectMediaKind("https://cdn.example.com/demo.mp4")).toBe("video");
+    expect(detectMediaKind("https://cdn.example.com/demo.webm?token=1")).toBe("video");
   });
 
-  it("does not allow popups to escape sandbox (tab-napping prevention)", () => {
-    const attrs = iframeSandbox();
-    expect(attrs.sandbox).not.toMatch(/allow-popups-to-escape-sandbox/);
+  it("detects common audio extensions", () => {
+    expect(detectMediaKind("https://cdn.example.com/track.mp3")).toBe("audio");
+    expect(detectMediaKind("https://cdn.example.com/track.ogg")).toBe("audio");
+  });
+
+  it("returns null for non-media URLs", () => {
+    expect(detectMediaKind("https://example.com/dia")).toBeNull();
+  });
+});
+
+describe("externalPreviewCopy", () => {
+  it("explains redirect previews without iframes", () => {
+    expect(
+      externalPreviewCopy({
+        kind: "playable",
+        repo: "https://github.com/nari-labs/dia",
+        runtime: "redirect",
+        entry: "https://example.com/dia",
+        display: "tree",
+      }),
+    ).toMatch(/new tab/i);
+    expect(
+      externalPreviewCopy({
+        kind: "playable",
+        repo: "https://github.com/nari-labs/dia",
+        runtime: "redirect",
+        entry: "https://cdn.example.com/demo.mp4",
+        display: "tree",
+      }),
+    ).toMatch(/HTML5/i);
   });
 });
 

@@ -64,7 +64,7 @@ describe("hydrateGithub", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.card.repo).toBe("https://github.com/nari-labs/dia");
-    expect(result.card.runtime).toBe("iframe");
+    expect(result.card.runtime).toBe("redirect");
     expect(result.card.entry).toBe("https://example.com/dia");
     expect(result.title).toBe("nari-labs/dia");
     expect(result.tree.map((n) => n.path)).toContain("README.md");

@@ -18,7 +18,7 @@ const safeHttpsEntry = z
 export const playableCardSchema = z.object({
   kind: z.literal("playable"),
   repo: githubRepoUrl,
-  runtime: z.enum(["none", "iframe", "webcontainer", "vm"]).default("none"),
+  runtime: z.enum(["none", "redirect", "webcontainer", "vm"]).default("none"),
   entry: safeHttpsEntry.optional(),
   display: z.enum(["tree", "ogl"]).default("tree"),
 });
