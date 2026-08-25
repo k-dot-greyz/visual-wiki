@@ -40,8 +40,6 @@ export default function OglDisplay({ tree }: { tree: TreeNode[] }) {
     if (!canvas) return;
     let raf = 0;
     let cancelled = false;
-    let geometry: { remove: () => void } | null = null;
-    let program: { remove: () => void } | null = null;
 
     import("ogl").then(({ Renderer, Geometry, Program, Mesh }) => {
       if (cancelled || !canvas) return;
@@ -54,8 +52,8 @@ export default function OglDisplay({ tree }: { tree: TreeNode[] }) {
         position[i * 3 + 1] = Math.floor(i / 8) / 4 - 0.5;
         position[i * 3 + 2] = 0;
       }
-      const geo = new Geometry(gl, { position: { size: 3, data: position } });
-      const prog = new Program(gl, {
+      const geometry = new Geometry(gl, { position: { size: 3, data: position } });
+      const program = new Program(gl, {
         vertex: `attribute vec3 position; uniform float uTime; void main() {
           gl_Position = vec4(position.x + sin(uTime + position.y) * 0.05, position.y, 0.0, 1.0);
           gl_PointSize = 4.0;
@@ -64,13 +62,11 @@ export default function OglDisplay({ tree }: { tree: TreeNode[] }) {
         transparent: true,
         uniforms: { uTime: { value: 0 } },
       });
-      geometry = geo;
-      program = prog;
-      const mesh = new Mesh(gl, { geometry: geo, program: prog, mode: gl.POINTS });
+      const mesh = new Mesh(gl, { geometry, program, mode: gl.POINTS });
       renderer.setSize(canvas.clientWidth || 320, canvas.clientHeight || 160);
       const loop = (t: number) => {
         if (cancelled) return;
-        prog.uniforms.uTime.value = t * 0.001;
+        program.uniforms.uTime.value = t * 0.001;
         renderer.render({ scene: mesh });
         raf = requestAnimationFrame(loop);
       };
@@ -80,10 +76,6 @@ export default function OglDisplay({ tree }: { tree: TreeNode[] }) {
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
-      geometry?.remove();
-      program?.remove();
-      geometry = null;
-      program = null;
     };
   }, [allowed, tree]);
 

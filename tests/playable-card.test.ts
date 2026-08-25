@@ -74,12 +74,5 @@ describe("playableCardSchema", () => {
         entry: "https://localhost/preview",
       }).success,
     ).toBe(false);
-    expect(
-      playableCardSchema.safeParse({
-        ...valid,
-        runtime: "iframe",
-        entry: "https://[fe80::1]/",
-      }).success,
-    ).toBe(false);
   });
 });

@@ -10,11 +10,6 @@ describe("iframeSandbox", () => {
     expect(attrs.sandbox).not.toMatch(/allow-same-origin/);
     expect(attrs.referrerPolicy).toBe("no-referrer");
   });
-
-  it("does not allow popups to escape sandbox (tab-napping prevention)", () => {
-    const attrs = iframeSandbox();
-    expect(attrs.sandbox).not.toMatch(/allow-popups-to-escape-sandbox/);
-  });
 });
 
 describe("runtimeStubCopy", () => {

@@ -5,7 +5,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { Resource } from "@/lib/types";
-import { isSafeUrl } from "@/lib/safe-url";
 
 const DATA_FILE = path.join(process.cwd(), "resources.json");
 
@@ -121,14 +120,6 @@ export async function addResourceAction(
     return { success: false, error: "Title and Link are required fields." };
   }
 
-  if (!isSafeUrl(link)) {
-    return { success: false, error: "Link must be a public http or https URL." };
-  }
-
-  if (image && !isSafeUrl(image)) {
-    return { success: false, error: "Image URL must be a public http or https URL." };
-  }
-
   const tags = tagsString
     .split(",")
     .map((t) => t.trim())
@@ -175,13 +166,6 @@ export async function deleteResourceAction(id: string) {
 }
 
 export async function addResourceDirect(newRes: Omit<Resource, "id" | "addedAt">): Promise<Resource> {
-  if (!isSafeUrl(newRes.link)) {
-    throw new Error("Resource link must be a public http or https URL.");
-  }
-  if (newRes.image && !isSafeUrl(newRes.image)) {
-    throw new Error("Resource image must be a public http or https URL.");
-  }
-
   const resource: Resource = {
     ...newRes,
     id: randomUUID(),

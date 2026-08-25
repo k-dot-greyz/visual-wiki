@@ -2,7 +2,7 @@ import type { PlayableCard } from "./playable-card";
 
 export function iframeSandbox(): { sandbox: string; referrerPolicy: string } {
   return {
-    sandbox: "allow-scripts allow-forms allow-popups",
+    sandbox: "allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox",
     referrerPolicy: "no-referrer",
   };
 }

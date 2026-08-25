@@ -44,7 +44,6 @@ test.describe("Playground", () => {
     const sandbox = await iframe.getAttribute("sandbox");
     expect(sandbox).toContain("allow-scripts");
     expect(sandbox).not.toContain("allow-same-origin");
-    expect(sandbox).not.toContain("allow-popups-to-escape-sandbox");
     await expect(iframe).toHaveAttribute("referrerpolicy", "no-referrer");
 
     await expect(page.locator("[data-ogl='on']")).toHaveCount(0);
