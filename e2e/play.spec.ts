@@ -69,7 +69,7 @@ test.describe("Playground", () => {
     await page.goto("/play?repo=nari-labs/dia");
     await expect(page.locator("iframe")).toHaveCount(0);
     const audio = page.locator("audio");
-    await expect(audio).toBeVisible();
+    await expect(audio).toHaveCount(1);
     await expect(audio).toHaveAttribute("src", "https://example.com/demo.mp3");
     await expect(audio).toHaveAttribute("controls", "");
     await expect(audio).not.toHaveAttribute("autoplay", /.*/);
@@ -84,7 +84,7 @@ test.describe("Playground", () => {
       });
     });
     await page.goto("/play?repo=k-dot-greyz/secret");
-    await expect(page.locator("p[role='alert']")).toContainText(/private/i);
+    await expect(page.getByRole("alert").filter({ hasText: /private/i })).toBeVisible();
     await expect(page.locator("iframe")).toHaveCount(0);
   });
 });

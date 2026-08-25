@@ -1,7 +1,32 @@
-import { isSafeUrl } from "./safe-url";
-
 const AUDIO_EXT = /\.(mp3|wav|ogg|oga|flac|m4a|aac|opus)(?:$|[?#])/i;
 const VIDEO_EXT = /\.(mp4|m4v|webm|ogv|mov)(?:$|[?#])/i;
+
+/** Browser-safe: no node:dns / node:net. Server Zod still uses lib/safe-url. */
+export function isPublicHttpUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    if (!hostname) return false;
+    if (hostname === "localhost" || hostname.endsWith(".local") || hostname.endsWith(".internal")) {
+      return false;
+    }
+    if (hostname === "::1" || hostname === "0:0:0:0:0:0:0:1") return false;
+    const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4) {
+      const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+      if (a === 10 || a === 127 || a === 0 || a >= 224) return false;
+      if (a === 169 && b === 254) return false;
+      if (a === 172 && b >= 16 && b <= 31) return false;
+      if (a === 192 && b === 168) return false;
+      if (a === 100 && b >= 64 && b <= 127) return false;
+      if (a === 198 && b >= 18 && b <= 19) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export type EntrySurface =
   | { kind: "none" }
@@ -44,7 +69,7 @@ export function surfaceFor(card: { runtime: string; entry?: string }): EntrySurf
   }
 
   const entry = card.entry;
-  if (!entry || !isSafeUrl(entry)) return { kind: "none" };
+  if (!entry || !isPublicHttpUrl(entry)) return { kind: "none" };
 
   const media = mediaKindForEntry(entry);
   if (card.runtime === "html5" || media) {

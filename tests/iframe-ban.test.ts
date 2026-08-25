@@ -15,6 +15,11 @@ describe("iframe ban", () => {
     expect(read("app/play/page.tsx")).not.toMatch(/<iframe/i);
   });
 
+  it("keeps entry-runtime free of node:dns so the client bundle can load", () => {
+    expect(read("lib/entry-runtime.ts")).not.toMatch(/dns\/promises|from "net"|from 'net'/);
+    expect(read("components/RunPane.tsx")).not.toMatch(/safe-url/);
+  });
+
   it("ships CSP that forbids framing and nested frames", () => {
     const config = read("next.config.ts");
     expect(config).toMatch(/frame-src 'none'/);
