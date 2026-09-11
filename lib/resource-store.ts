@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
@@ -143,7 +144,7 @@ function parseList(raw: string | null): Resource[] {
 }
 
 function defaultId(): string {
-  return Date.now().toString(36);
+  return randomUUID();
 }
 
 function guardUrls(link: string, image?: string): string | null {
@@ -156,6 +157,19 @@ function guardUrls(link: string, image?: string): string | null {
 export function createResourceStore(deps: ResourceStoreDeps) {
   const now = deps.now ?? (() => new Date());
   const idGen = deps.id ?? defaultId;
+
+  // Serialize every read-modify-write so concurrent callers (two pipe POSTs,
+  // importAll + a form submit, etc.) cannot interleave load()/save() and
+  // silently discard each other's rows. A failed call must not stall the queue.
+  let _chain: Promise<unknown> = Promise.resolve();
+  function withLock<T>(fn: () => Promise<T>): Promise<T> {
+    const result: Promise<T> = _chain.then(fn);
+    _chain = result.then(
+      () => {},
+      () => {},
+    );
+    return result;
+  }
 
   async function load(): Promise<Resource[]> {
     const raw = await deps.persist.read();
@@ -192,65 +206,73 @@ export function createResourceStore(deps: ResourceStoreDeps) {
       const urlError = guardUrls(link, image);
       if (urlError) return { ok: false, error: urlError };
 
-      const list = await load();
-      const existing = list.find((r) => normalizeLink(r.link) === normalizeLink(link));
-      if (existing) {
-        return { ok: true, resource: existing, duplicate: true };
-      }
+      return withLock(async () => {
+        const list = await load();
+        const existing = list.find((r) => normalizeLink(r.link) === normalizeLink(link));
+        if (existing) {
+          return { ok: true, resource: existing, duplicate: true };
+        }
 
-      const resource: Resource = {
-        ...input,
-        id: input.id?.trim() || idGen(),
-        title,
-        description: input.description?.trim() || "No description yet.",
-        category: input.category || "example",
-        tags: input.tags?.length ? input.tags : ["new"],
-        link,
-        image,
-        addedAt: input.addedAt || now().toISOString().split("T")[0],
-      };
+        const resource: Resource = {
+          ...input,
+          id: input.id?.trim() || idGen(),
+          title,
+          description: input.description?.trim() || "No description yet.",
+          category: input.category || "example",
+          tags: input.tags?.length ? input.tags : ["new"],
+          link,
+          image,
+          addedAt: input.addedAt || now().toISOString().split("T")[0],
+        };
 
-      const parsed = resourceSchema.safeParse(resource);
-      if (!parsed.success) {
-        return { ok: false, error: "Resource failed validation" };
-      }
+        const parsed = resourceSchema.safeParse(resource);
+        if (!parsed.success) {
+          return { ok: false, error: "Resource failed validation" };
+        }
 
-      const next = [parsed.data, ...list];
-      await save(next);
-      return { ok: true, resource: parsed.data };
+        const next = [parsed.data, ...list];
+        await save(next);
+        return { ok: true, resource: parsed.data };
+      });
     },
 
     async update(
       id: string,
       patch: Partial<Omit<Resource, "id">>,
     ): Promise<StoreResult<{ resource: Resource }>> {
-      const list = await load();
-      const idx = list.findIndex((r) => r.id === id);
-      if (idx === -1) return { ok: false, error: "Resource not found" };
+      return withLock(async () => {
+        const list = await load();
+        const idx = list.findIndex((r) => r.id === id);
+        if (idx === -1) return { ok: false, error: "Resource not found" };
 
-      const merged: Resource = { ...list[idx], ...patch, id };
-      if (patch.link || patch.image) {
-        const urlError = guardUrls(merged.link, merged.image);
-        if (urlError) return { ok: false, error: urlError };
-      }
-      const parsed = resourceSchema.safeParse(merged);
-      if (!parsed.success) return { ok: false, error: "Resource failed validation" };
+        const merged: Resource = { ...list[idx], ...patch, id };
+        if (patch.link || patch.image) {
+          const urlError = guardUrls(merged.link, merged.image);
+          if (urlError) return { ok: false, error: urlError };
+        }
+        const parsed = resourceSchema.safeParse(merged);
+        if (!parsed.success) return { ok: false, error: "Resource failed validation" };
 
-      list[idx] = parsed.data;
-      await save(list);
-      return { ok: true, resource: parsed.data };
+        list[idx] = parsed.data;
+        await save(list);
+        return { ok: true, resource: parsed.data };
+      });
     },
 
     async remove(id: string): Promise<StoreResult<{ resource: Resource }>> {
-      const list = await load();
-      const resource = list.find((r) => r.id === id);
-      if (!resource) return { ok: false, error: "Resource not found" };
-      await save(list.filter((r) => r.id !== id));
-      return { ok: true, resource };
+      return withLock(async () => {
+        const list = await load();
+        const resource = list.find((r) => r.id === id);
+        if (!resource) return { ok: false, error: "Resource not found" };
+        await save(list.filter((r) => r.id !== id));
+        return { ok: true, resource };
+      });
     },
 
     async reset(seed: Resource[] = initialResources): Promise<void> {
-      await save(seed.map((r) => ({ ...r })));
+      return withLock(async () => {
+        await save(seed.map((r) => ({ ...r })));
+      });
     },
 
     async importAll(

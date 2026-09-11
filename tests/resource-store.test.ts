@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -104,6 +104,47 @@ describe("createResourceStore", () => {
     expect(list.some((r) => r.title.includes("React Three Fiber"))).toBe(true);
     expect(list.some((r) => r.title === "UX Journey Deck")).toBe(true);
   });
+
+  it("preserves all resources when add is called concurrently", async () => {
+    let data = "[]";
+    const persist: Persist = {
+      async read() {
+        await Promise.resolve();
+        return data;
+      },
+      async write(json: string) {
+        await Promise.resolve();
+        data = json;
+      },
+    };
+    const store = createResourceStore({ persist });
+
+    await Promise.all([
+      store.add({ ...sample, title: "Resource A", link: "https://example.com/a" }),
+      store.add({ ...sample, title: "Resource B", link: "https://example.com/b" }),
+    ]);
+
+    const titles = (await store.list()).map((r) => r.title);
+    expect(titles).toContain("Resource A");
+    expect(titles).toContain("Resource B");
+  });
+
+  it("keeps sibling rows when Date.now is stuck in the same millisecond", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+    const store = createResourceStore({ persist: memoryPersist("[]") });
+    const a = await store.add({ ...sample, title: "Keep A", link: "https://example.com/keep-a" });
+    const b = await store.add({ ...sample, title: "Keep B", link: "https://example.com/keep-b" });
+    expect(a.ok && b.ok).toBe(true);
+    if (!a.ok || !b.ok) return;
+    expect(a.resource.id).not.toBe(b.resource.id);
+    await store.remove(a.resource.id);
+    expect(await store.getById(b.resource.id)).not.toBeNull();
+    expect((await store.list()).map((r) => r.title)).toContain("Keep B");
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("createFilePersist", () => {
