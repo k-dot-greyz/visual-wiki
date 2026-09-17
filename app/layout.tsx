@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import WikiLiveRegion from "@/components/WikiLiveRegion";
+import WikiUndoBar from "@/components/WikiUndoBar";
+import SkipLink from "@/components/SkipLink";
+import InspectEditSheet from "@/components/InspectEditSheet";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const grotesk = Space_Grotesk({
@@ -26,6 +30,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${grotesk.variable} font-sans bg-zinc-950 text-zinc-200 antialiased`}
       >
+        <SkipLink />
+        <WikiLiveRegion />
+        <WikiUndoBar />
+        <InspectEditSheet />
         {children}
         <Toaster position="top-center" richColors closeButton />
       </body>
